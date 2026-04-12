@@ -38,7 +38,7 @@ async function parseForm(c: Context): Promise<Record<string, any>> {
 
 // Pinterest Verification
 app.get('/pinterest-12995.html', (c) => {
-    return c.text('pinterest-site-verification=201b195821c2725595f95f4e09f5ec7e');
+    return c.text('pinterest-site-verification=129956d073186271cd7fcf5315605557');
 });
 
 // Portfolio Home

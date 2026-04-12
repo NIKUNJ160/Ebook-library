@@ -27,7 +27,7 @@ function baseHead(title: string, extraCss: string = ''): string {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <meta name="p:domain_verify" content="201b195821c2725595f95f4e09f5ec7e">
+    <meta name="p:domain_verify" content="129956d073186271cd7fcf5315605557">
     <link rel="stylesheet" href="/assets/css/style.css">
     ${extraCss}
 </head>`;
