@@ -12,3 +12,5 @@ database_id = "d9e46eaa-6f5f-428c-98e2-b67f4da500ba"
 
 [vars]
 ALLOW_REGISTRATION = "true"
+INVITE_CODE = "nikunj2024"
+JWT_SECRET_KEY = "local-dev-secret-change-in-production"

@@ -166,3 +166,23 @@ export async function authMiddleware(
     c.set('user', session);
     await next();
 }
+
+// --- CSRF Protection (Double Submit Cookie) ---
+
+export function generateCsrfToken(): string {
+    const array = new Uint8Array(16);
+    crypto.getRandomValues(array);
+    return Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export function setCsrfCookie(token: string): string {
+    return `csrf_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=3600; Secure`;
+}
+
+export function getCsrfCookie(cookieHeader: string | undefined): string | null {
+    if (!cookieHeader) return null;
+    const cookies = cookieHeader.split(';').map(c => c.trim());
+    const csrfCookie = cookies.find(c => c.startsWith('csrf_token='));
+    if (!csrfCookie) return null;
+    return csrfCookie.substring(csrfCookie.indexOf('=') + 1);
+}

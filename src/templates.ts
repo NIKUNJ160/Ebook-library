@@ -1,26 +1,16 @@
-// HTML Templates - renders the same design as the original PHP files
-
+import { html, raw } from 'hono/html';
+import type { HtmlEscapedString } from 'hono/utils/html';
 import type { ProjectRow, SkillRow, ServiceRow, MessageRow } from './env';
-
-function escapeHtml(str: string | null | undefined): string {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
 
 // ─── Base Layout ───
 
-function baseHead(title: string, extraCss: string = ''): string {
-    return `<!DOCTYPE html>
+function baseHead(title: string, extraCss: any = ''): any {
+    return html`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${escapeHtml(title)}</title>
+    <title>${title}</title>
     <meta name="description" content="Nikunj Pateliya - Web Designer & Full-Stack Developer portfolio">
     <link rel="icon" href="/favicon.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -41,8 +31,9 @@ export function renderPortfolio(
     projects: ProjectRow[],
     skillsByCategory: SkillsByCategory,
     messageSent: boolean = false,
-    errorMsg: string = ''
-): string {
+    errorMsg: string = '',
+    csrfToken: string = ''
+): any {
     const projectCards = projects.length > 0
         ? projects.map(p => {
             const tags = (p.tags || '').split(',').map(t => t.trim()).filter(Boolean);
@@ -50,34 +41,34 @@ export function renderPortfolio(
             if (imgUrl && !imgUrl.startsWith('http') && !imgUrl.startsWith('/')) {
                 imgUrl = '/' + imgUrl;
             }
-            return `<article class="project-card">
-            <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(p.title)}" class="project-thumb">
+            return html`<article class="project-card">
+            <img src="${imgUrl}" alt="${p.title}" class="project-thumb">
             <div class="project-content">
                 <div class="project-tags">
-                    ${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
+                    ${tags.map(t => html`<span class="tag">${t}</span>`)}
                 </div>
-                <h3 class="project-title">${escapeHtml(p.title)}</h3>
-                <p class="project-desc">${escapeHtml(p.description)}</p>
-                <a href="${escapeHtml(p.project_url)}" class="project-link">
+                <h3 class="project-title">${p.title}</h3>
+                <p class="project-desc">${p.description}</p>
+                <a href="${p.project_url || '#'}" class="project-link">
                     View Project <span>&rarr;</span>
                 </a>
             </div>
         </article>`;
-        }).join('')
-        : `<div class="project-card" style="grid-column: 1 / -1; text-align: center; padding: 4rem;">
+        })
+        : html`<div class="project-card" style="grid-column: 1 / -1; text-align: center; padding: 4rem;">
         <h3 class="project-title">Work in Progress</h3>
         <p class="project-desc">Projects are currently being uploaded. Check back soon!</p>
       </div>`;
 
     const skillsHtml = Object.keys(skillsByCategory).length > 0
-        ? Object.entries(skillsByCategory).map(([category, skills]) => `
+        ? Object.entries(skillsByCategory).map(([category, skills]) => html`
         <div class="skill-category">
-            <h4 class="skill-heading">${escapeHtml(category.charAt(0).toUpperCase() + category.slice(1))}</h4>
+            <h4 class="skill-heading">${category.charAt(0).toUpperCase() + category.slice(1)}</h4>
             <div class="skill-list">
-                ${skills.map(s => `<div class="skill-pill">${escapeHtml(s.name)}</div>`).join('')}
+                ${skills.map(s => html`<div class="skill-pill">${s.name}</div>`)}
             </div>
-        </div>`).join('')
-        : `<div class="skill-category">
+        </div>`)
+        : html`<div class="skill-category">
         <h4 class="skill-heading">Frontend</h4>
         <div class="skill-list">
             <div class="skill-pill">HTML5</div><div class="skill-pill">CSS3</div>
@@ -101,16 +92,16 @@ export function renderPortfolio(
       </div>`;
 
     const successBanner = messageSent
-        ? `<div style="background: rgba(52, 211, 153, 0.1); color: var(--accent-color); padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center; border: 1px solid rgba(52, 211, 153, 0.2);">
+        ? html`<div style="background: rgba(52, 211, 153, 0.1); color: var(--accent-color); padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center; border: 1px solid rgba(52, 211, 153, 0.2);">
         Message sent successfully! I'll get back to you soon.
       </div>` : '';
 
     const errorBanner = errorMsg
-        ? `<div style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center; border: 1px solid rgba(239, 68, 68, 0.2);">
-        ${escapeHtml(errorMsg)}
+        ? html`<div style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center; border: 1px solid rgba(239, 68, 68, 0.2);">
+        ${errorMsg}
       </div>` : '';
 
-    return `${baseHead('Nikunj Pateliya | Web Designer & Full-Stack Developer')}
+    return html`${baseHead('Nikunj Pateliya | Web Designer & Full-Stack Developer')}
 <body>
     <!-- Fixed Status Pill -->
     <div class="status-pill">
@@ -211,7 +202,7 @@ export function renderPortfolio(
                 ${errorBanner}
 
                 <form method="POST" action="/contact">
-                    <input type="hidden" name="csrfToken" value="fixed-csrf-token-for-now">
+                    ${csrfToken ? html`<input type="hidden" name="csrfToken" value="${csrfToken}">` : ''}
                     <div class="form-group">
                         <label for="name" class="form-label">Name</label>
                         <input type="text" id="name" name="name" class="form-control" required>
@@ -242,7 +233,7 @@ export function renderPortfolio(
 
     <footer class="footer">
         <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>&copy; ${new Date().getFullYear()} Nikunj Pateliya. All rights reserved.</span>
+            <span>&copy; ${new Date().getFullYear().toString()} Nikunj Pateliya. All rights reserved.</span>
             <a href="/admin" style="color: var(--text-muted); font-size: 0.85rem;">Admin Panel &rarr;</a>
         </div>
     </footer>
@@ -254,7 +245,7 @@ export function renderPortfolio(
 
 // ─── Auth Pages ───
 
-const authCss = `<style>
+const authCss = html`<style>
     .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
     .auth-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 3rem; width: 100%; max-width: 420px; }
     .auth-card h1 { font-size: 1.75rem; margin-bottom: 0.5rem; }
@@ -267,16 +258,17 @@ const authCss = `<style>
     .success-msg { background: rgba(52, 211, 153, 0.1); color: var(--accent-color); padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; border: 1px solid rgba(52, 211, 153, 0.2); }
 </style>`;
 
-export function renderLogin(error: string = '', success: string = ''): string {
-    return `${baseHead('Login | Nikunj Pateliya', authCss)}
+export function renderLogin(error: string = '', success: string = '', csrfToken: string = ''): any {
+    return html`${baseHead('Login | Nikunj Pateliya', authCss)}
 <body>
     <div class="auth-container">
         <div class="auth-card">
             <h1>Welcome Back</h1>
             <p class="subtitle">Sign in to manage your portfolio</p>
-            ${error ? `<div class="error-msg">${escapeHtml(error)}</div>` : ''}
-            ${success ? `<div class="success-msg">${escapeHtml(success)}</div>` : ''}
+            ${error ? html`<div class="error-msg">${error}</div>` : ''}
+            ${success ? html`<div class="success-msg">${success}</div>` : ''}
             <form method="POST" action="/login">
+                ${csrfToken ? html`<input type="hidden" name="csrfToken" value="${csrfToken}">` : ''}
                 <div class="form-group">
                     <label class="form-label">Username</label>
                     <input type="text" name="username" class="form-control" required autofocus>
@@ -299,15 +291,16 @@ export function renderLogin(error: string = '', success: string = ''): string {
 </html>`;
 }
 
-export function renderRegister(error: string = ''): string {
-    return `${baseHead('Register | Nikunj Pateliya', authCss)}
+export function renderRegister(error: string = '', csrfToken: string = ''): any {
+    return html`${baseHead('Register | Nikunj Pateliya', authCss)}
 <body>
     <div class="auth-container">
         <div class="auth-card">
             <h1>Create Account</h1>
             <p class="subtitle">Register to manage your portfolio</p>
-            ${error ? `<div class="error-msg">${escapeHtml(error)}</div>` : ''}
+            ${error ? html`<div class="error-msg">${error}</div>` : ''}
             <form method="POST" action="/register">
+                ${csrfToken ? html`<input type="hidden" name="csrfToken" value="${csrfToken}">` : ''}
                 <div class="form-group">
                     <label class="form-label">Username</label>
                     <input type="text" name="username" class="form-control" required autofocus minlength="3">
@@ -340,7 +333,7 @@ export function renderRegister(error: string = ''): string {
 
 // ─── Admin Pages ───
 
-const adminCss = `<style>
+const adminCss = html`<style>
     .admin-layout { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
     .sidebar { background: var(--bg-card); border-right: 1px solid var(--border-color); padding: 2rem; display: flex; flex-direction: column; }
     .main-content { padding: 3rem; }
@@ -379,10 +372,10 @@ const adminCss = `<style>
     }
 </style>`;
 
-function adminSidebar(activePage: string, username: string): string {
-    return `<aside class="sidebar">
+function adminSidebar(activePage: string, username: string, csrfToken: string = ''): any {
+    return html`<aside class="sidebar">
     <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Admin Panel</h2>
-    <p style="color: var(--text-secondary); font-size: 0.85rem;">Hi, ${escapeHtml(username)}</p>
+    <p style="color: var(--text-secondary); font-size: 0.85rem;">Hi, ${username}</p>
     <ul class="sidebar-menu">
         <li><a href="/admin/projects" class="${activePage === 'projects' ? 'active' : ''}">Projects</a></li>
         <li><a href="/admin/skills" class="${activePage === 'skills' ? 'active' : ''}">Skills</a></li>
@@ -390,44 +383,46 @@ function adminSidebar(activePage: string, username: string): string {
         <li><a href="/admin/messages" class="${activePage === 'messages' ? 'active' : ''}">Messages</a></li>
     </ul>
     <form method="POST" action="/logout">
+        ${csrfToken ? html`<input type="hidden" name="csrfToken" value="${csrfToken}">` : ''}
         <button type="submit" class="logout-btn">Logout</button>
     </form>
   </aside>`;
 }
 
-export function renderAdminProjects(projects: ProjectRow[], username: string, msg: string = ''): string {
+export function renderAdminProjects(projects: ProjectRow[], username: string, msg: string = '', csrfToken: string = ''): any {
     const rows = projects.length > 0
         ? projects.map(p => {
             let imgUrl = p.image_url || '';
             if (imgUrl && !imgUrl.startsWith('http') && !imgUrl.startsWith('/')) {
                 imgUrl = '/' + imgUrl;
             }
-            return `<tr>
-        <td><img src="${escapeHtml(imgUrl)}" alt="" style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px;"></td>
-        <td>${escapeHtml(p.title)}</td>
-        <td>${escapeHtml(p.tags)}</td>
+            return html`<tr>
+        <td><img src="${imgUrl}" alt="" style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px;"></td>
+        <td>${p.title}</td>
+        <td>${p.tags}</td>
         <td>${p.is_featured ? 'Yes' : 'No'}</td>
         <td>
             <a href="/admin/projects/edit?id=${p.id}" class="action-btn btn-edit">Edit</a>
             <form method="POST" action="/admin/projects/delete" style="display: inline;" onsubmit="return confirm('Are you sure?');">
                 <input type="hidden" name="id" value="${p.id}">
+                ${csrfToken ? html`<input type="hidden" name="csrfToken" value="${csrfToken}">` : ''}
                 <button type="submit" class="action-btn btn-delete">Delete</button>
             </form>
         </td>
       </tr>`;
-        }).join('')
-        : `<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">No projects found.</td></tr>`;
+        })
+        : html`<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">No projects found.</td></tr>`;
 
-    return `${baseHead('Manage Projects | Admin', adminCss)}
+    return html`${baseHead('Manage Projects | Admin', adminCss)}
 <body>
     <div class="admin-layout">
-        ${adminSidebar('projects', username)}
+        ${adminSidebar('projects', username, csrfToken)}
         <main class="main-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <h1>Projects</h1>
                 <a href="/admin/projects/edit" class="btn">Add New Project</a>
             </div>
-            ${msg ? `<div class="alert-success">${escapeHtml(msg)}</div>` : ''}
+            ${msg ? html`<div class="alert-success">${msg}</div>` : ''}
             <div class="table-container">
                 <table>
                     <thead><tr><th>Image</th><th>Title</th><th>Tags</th><th>Featured</th><th>Actions</th></tr></thead>
@@ -439,40 +434,41 @@ export function renderAdminProjects(projects: ProjectRow[], username: string, ms
 </body></html>`;
 }
 
-export function renderProjectForm(project: ProjectRow | null, username: string): string {
+export function renderProjectForm(project: ProjectRow | null, username: string, csrfToken: string = ''): any {
     const isEdit = !!project;
     const title = isEdit ? 'Edit Project' : 'Add New Project';
-    return `${baseHead(`${title} | Admin`, adminCss)}
+    return html`${baseHead(`${title} | Admin`, adminCss)}
 <body>
     <div class="admin-layout">
-        ${adminSidebar('projects', username)}
+        ${adminSidebar('projects', username, csrfToken)}
         <main class="main-content" style="max-width: 1050px;">
             <h1 style="margin-bottom: 2rem;">${title}</h1>
             <form method="POST" action="/admin/projects/save" style="display: grid; gap: 1.5rem;">
-                ${isEdit ? `<input type="hidden" name="id" value="${project!.id}">` : ''}
+                ${isEdit ? html`<input type="hidden" name="id" value="${project!.id}">` : ''}
+                ${csrfToken ? html`<input type="hidden" name="csrfToken" value="${csrfToken}">` : ''}
                 <div class="form-group">
                     <label class="form-label">Project Title</label>
-                    <input type="text" name="title" class="form-control" required value="${escapeHtml(project?.title || '')}">
+                    <input type="text" name="title" class="form-control" required value="${project?.title || ''}">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Description</label>
-                    <textarea name="description" class="form-control" rows="5" required>${escapeHtml(project?.description || '')}</textarea>
+                    <textarea name="description" class="form-control" rows="5" required>${project?.description || ''}</textarea>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Tags (comma separated)</label>
-                    <input type="text" name="tags" class="form-control" value="${escapeHtml(project?.tags || '')}" placeholder="PHP, React, CSS">
+                    <input type="text" name="tags" class="form-control" value="${project?.tags || ''}" placeholder="PHP, React, CSS">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Image URL or Local Path</label>
-                    <input type="text" name="image_url" class="form-control" value="${escapeHtml(project?.image_url || '')}" placeholder="e.g. /assets/images/projects/photo.jpg or https://...">
+                    <input type="text" name="image_url" class="form-control" value="${project?.image_url || ''}" placeholder="e.g. /assets/images/projects/photo.jpg or https://...">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Project URL (Live Link)</label>
-                    <input type="url" name="project_url" class="form-control" value="${escapeHtml(project?.project_url || '')}">
+                    <input type="url" name="project_url" class="form-control" value="${project?.project_url || ''}">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Repository URL (GitHub)</label>
-                    <input type="url" name="repo_url" class="form-control" value="${escapeHtml(project?.repo_url || '')}">
+                    <input type="url" name="repo_url" class="form-control" value="${project?.repo_url || ''}">
                 </div>
                 <div class="form-group">
                     <label class="form-label" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
@@ -490,14 +486,15 @@ export function renderProjectForm(project: ProjectRow | null, username: string):
 </body></html>`;
 }
 
-export function renderAdminSkills(skills: SkillRow[], username: string): string {
-    return `${baseHead('Skills | Admin', adminCss)}
+export function renderAdminSkills(skills: SkillRow[], username: string, csrfToken: string = ''): any {
+    return html`${baseHead('Skills | Admin', adminCss)}
 <body>
     <div class="admin-layout">
-        ${adminSidebar('skills', username)}
+        ${adminSidebar('skills', username, csrfToken)}
         <main class="main-content">
             <h1 style="margin-bottom: 2rem;">Manage Skills</h1>
             <form method="POST" action="/admin/skills/add" class="form-inline">
+                ${csrfToken ? html`<input type="hidden" name="csrfToken" value="${csrfToken}">` : ''}
                 <div style="flex-grow: 1;">
                     <label class="form-label">Skill Name</label>
                     <input type="text" name="name" class="form-control" placeholder="e.g. React" required>
@@ -519,30 +516,32 @@ export function renderAdminSkills(skills: SkillRow[], username: string): string 
             </form>
             <h2 style="margin-bottom: 1rem; font-size: 1.25rem;">Current Skills</h2>
             <div>
-                ${skills.map(s => `
+                ${skills.map(s => html`
                     <form method="POST" action="/admin/skills/delete" style="display: inline;">
+                        ${csrfToken ? html`<input type="hidden" name="csrfToken" value="${csrfToken}">` : ''}
                         <span class="skill-item">
-                            ${escapeHtml(s.name)} (${escapeHtml(s.category)})
+                            ${s.name} (${s.category})
                             <input type="hidden" name="id" value="${s.id}">
                             <button type="submit" class="del-x" onclick="return confirm('Remove skill?');">&times;</button>
                         </span>
                     </form>
-                `).join('')}
+                `)}
             </div>
         </main>
     </div>
 </body></html>`;
 }
 
-export function renderAdminServices(services: ServiceRow[], username: string): string {
-    return `${baseHead('Services | Admin', adminCss)}
+export function renderAdminServices(services: ServiceRow[], username: string, csrfToken: string = ''): any {
+    return html`${baseHead('Services | Admin', adminCss)}
 <body>
     <div class="admin-layout">
-        ${adminSidebar('services', username)}
+        ${adminSidebar('services', username, csrfToken)}
         <main class="main-content">
             <h1 style="margin-bottom: 2rem;">Manage Services</h1>
             <form method="POST" action="/admin/services/add" style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 2rem;">
                 <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Add New Service</h3>
+                ${csrfToken ? html`<input type="hidden" name="csrfToken" value="${csrfToken}">` : ''}
                 <div style="display: grid; gap: 1rem;">
                     <div>
                         <label class="form-label">Title</label>
@@ -561,64 +560,67 @@ export function renderAdminServices(services: ServiceRow[], username: string): s
             </form>
             <h2 style="margin-bottom: 1rem; font-size: 1.25rem;">Current Services</h2>
             <div class="service-list">
-                ${services.map(s => `
+                ${services.map(s => html`
                     <div class="service-item">
-                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">${escapeHtml(s.icon)}</div>
-                        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">${escapeHtml(s.title)}</h3>
-                        <p style="color: var(--text-secondary); font-size: 0.9rem;">${escapeHtml(s.description)}</p>
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">${s.icon}</div>
+                        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">${s.title}</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">${s.description}</p>
                         <form method="POST" action="/admin/services/delete" onsubmit="return confirm('Delete service?');">
+                            ${csrfToken ? html`<input type="hidden" name="csrfToken" value="${csrfToken}">` : ''}
                             <input type="hidden" name="id" value="${s.id}">
                             <button type="submit" class="btn-del-abs">Delete</button>
                         </form>
                     </div>
-                `).join('')}
+                `)}
             </div>
         </main>
     </div>
 </body></html>`;
 }
 
-export function renderAdminMessages(messages: MessageRow[], username: string, msg: string = ''): string {
+export function renderAdminMessages(messages: MessageRow[], username: string, msg: string = '', csrfToken: string = ''): any {
     const formatDate = (d: string): string => {
         try {
             return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
         } catch { return d; }
     };
 
-    return `${baseHead('Messages | Admin', adminCss)}
+    return html`${baseHead('Messages | Admin', adminCss)}
 <body>
     <div class="admin-layout">
-        ${adminSidebar('messages', username)}
+        ${adminSidebar('messages', username, csrfToken)}
         <main class="main-content">
             <h1 style="margin-bottom: 2rem;">Inquiries</h1>
-            ${msg ? `<div class="alert-success">${escapeHtml(msg)}</div>` : ''}
+            ${msg ? html`<div class="alert-success">${msg}</div>` : ''}
             ${messages.length === 0
-            ? `<p style="color: var(--text-secondary);">No messages found.</p>`
-            : messages.map(m => `
+            ? html`<p style="color: var(--text-secondary);">No messages found.</p>`
+            : messages.map(m => html`
                 <div class="message-card">
                     <div class="message-header">
                         <div>
-                            <strong style="font-size: 1.1rem; display: block;">${escapeHtml(m.name)}</strong>
-                            <span class="meta">${escapeHtml(m.email)}</span>
+                            <strong style="font-size: 1.1rem; display: block;">${m.name}</strong>
+                            <span class="meta">${m.email}</span>
                         </div>
                         <div style="text-align: right;">
                             <div class="meta" style="margin-bottom: 5px;">${formatDate(m.created_at)}</div>
                             ${m.status === 'new'
-                    ? `<span class="status-new">New</span>
+                    ? html`<span class="status-new">New</span>
                                  <form method="POST" action="/admin/messages/read" style="display: inline;">
+                                     ${csrfToken ? html`<input type="hidden" name="csrfToken" value="${csrfToken}">` : ''}
                                      <input type="hidden" name="id" value="${m.id}">
                                      <button type="submit" class="btn-action btn-read">Mark Read</button>
                                  </form>`
-                    : `<span class="meta">Read</span>`}
+                    : html`<span class="meta">Read</span>`}
                         </div>
                     </div>
-                    <p style="color: var(--text-primary); white-space: pre-wrap;">${escapeHtml(m.message)}</p>
+                    <p style="color: var(--text-primary); white-space: pre-wrap;">${m.message}</p>
                     <form method="POST" action="/admin/messages/delete" style="margin-top: 1rem; text-align: right;" onsubmit="return confirm('Delete this message?');">
+                        ${csrfToken ? html`<input type="hidden" name="csrfToken" value="${csrfToken}">` : ''}
                         <input type="hidden" name="id" value="${m.id}">
                         <button type="submit" class="btn-action btn-del">Delete</button>
                     </form>
                 </div>
-              `).join('')}
+              `)}
         </main>
     </div>
 </body></html>`;
