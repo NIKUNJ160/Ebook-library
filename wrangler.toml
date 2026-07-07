@@ -1,4 +1,4 @@
-name = "my-portfolio"
+name = "ebook-library"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 
@@ -7,8 +7,8 @@ directory = "./public"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "portfolio-db"
-database_id = "d9e46eaa-6f5f-428c-98e2-b67f4da500ba"
+database_name = "ebook-library-db"
+database_id = "79929b7e-e5e1-412b-a231-a2bb210b759f"
 
 [vars]
 ALLOW_REGISTRATION = "true"
