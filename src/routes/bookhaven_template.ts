@@ -1523,11 +1523,17 @@ export function renderBookHaven(): string {
                                         {otpSent && (
                                             <div class="space-y-2">
                                                 <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Enter 6-Digit OTP Code</label>
-                                                <input type="text" maxLength="6" value={authOtp} onChange={(e) => setAuthOtp(e.target.value)} required placeholder="123456" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 tracking-widest text-center text-lg font-bold focus:outline-none focus:border-brand-500 text-white" />
+                                                <input type="text" maxLength={6} maxlength="6" value={authOtp} onChange={(e) => setAuthOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} required placeholder="123456" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 tracking-widest text-center text-lg font-bold focus:outline-none focus:border-brand-500 text-white" />
                                                 
                                                 {sentCode && (
-                                                    <div class="bg-brand-500/10 border border-brand-500/20 rounded-xl p-3 text-center text-xs text-brand-300 font-semibold my-2">
-                                                        [DEV MODE] Simulated SMS/Email Code: <span class="text-white font-mono font-bold tracking-wider">{sentCode}</span>
+                                                    <div class="bg-brand-500/10 border border-brand-500/20 rounded-xl p-4 my-2 animate-bounce flex items-start gap-3">
+                                                        <div class="bg-brand-500 text-slate-950 p-2 rounded-lg mt-0.5">
+                                                            <i class="fas fa-sms text-sm"></i>
+                                                        </div>
+                                                        <div class="text-left flex-grow">
+                                                            <p class="text-xs font-bold text-white">Simulated SMS / Mail Alert</p>
+                                                            <p class="text-[11px] text-slate-350 mt-0.5">Enter code <span class="bg-slate-800 text-brand-400 font-mono font-black px-2 py-0.5 rounded border border-slate-700 tracking-wider text-xs">{sentCode}</span> to verify your identity.</p>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
