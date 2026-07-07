@@ -51,26 +51,25 @@ CREATE TABLE IF NOT EXISTS services (
 
 -- ─── BOOKHAVEN EBOOK PLATFORM TABLES ───
 
--- Profiles & Wallets
+-- Profiles
 CREATE TABLE IF NOT EXISTS ebook_users (
     id TEXT PRIMARY KEY,
     username TEXT NOT NULL,
     email TEXT UNIQUE,
+    mobile_number TEXT UNIQUE,
     provider TEXT DEFAULT 'local',
     age_group TEXT CHECK(age_group IN ('adult', 'ya')) DEFAULT 'ya',
     bio TEXT,
     avatar_url TEXT,
-    wallet_balance REAL DEFAULT 0.00,
     created_at TEXT DEFAULT (datetime('now'))
 );
 
--- Wallet Transactions
-CREATE TABLE IF NOT EXISTS wallet_transactions (
+-- OTP Verifications
+CREATE TABLE IF NOT EXISTS otp_verifications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT NOT NULL,
-    amount REAL NOT NULL,
-    type TEXT CHECK(type IN ('topup', 'purchase', 'sale', 'withdraw')),
-    description TEXT,
+    identifier TEXT NOT NULL,
+    otp_code TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
     created_at TEXT DEFAULT (datetime('now'))
 );
 
@@ -130,19 +129,6 @@ CREATE TABLE IF NOT EXISTS forum_replies (
     created_at TEXT DEFAULT (datetime('now'))
 );
 
--- Marketplace Listings for buying/selling books
-CREATE TABLE IF NOT EXISTS marketplace_listings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    seller_id TEXT NOT NULL,
-    book_title TEXT NOT NULL,
-    book_author TEXT NOT NULL,
-    description TEXT,
-    price REAL NOT NULL,
-    listing_type TEXT CHECK(listing_type IN ('sell', 'trade')) DEFAULT 'sell',
-    status TEXT CHECK(status IN ('active', 'sold', 'traded')) DEFAULT 'active',
-    created_at TEXT DEFAULT (datetime('now'))
-);
-
 -- Reading Challenges
 CREATE TABLE IF NOT EXISTS reading_challenges (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -160,4 +146,5 @@ CREATE TABLE IF NOT EXISTS user_challenges (
     books_read INTEGER DEFAULT 0,
     PRIMARY KEY (user_id, challenge_id)
 );
+
 

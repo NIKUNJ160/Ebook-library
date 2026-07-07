@@ -155,25 +155,24 @@ export function renderBookHaven(): string {
             const [showAuthModal, setShowAuthModal] = useState(!auth);
             const [authMode, setAuthMode] = useState('login'); // login, register, oauth
             const [oauthProvider, setOauthProvider] = useState(null);
-            const [showTopupModal, setShowTopupModal] = useState(false);
-            const [showCreateListingModal, setShowCreateListingModal] = useState(false);
             const [showCreateClubModal, setShowCreateClubModal] = useState(false);
             const [showCreateThreadModal, setShowCreateThreadModal] = useState(false);
             const [showNotifications, setShowNotifications] = useState(false);
             
             // Form states
-            const [loginEmail, setLoginEmail] = useState('');
-            const [loginPassword, setLoginPassword] = useState('');
+            const [authIdentifier, setAuthIdentifier] = useState('');
+            const [authOtp, setAuthOtp] = useState('');
+            const [otpSent, setOtpSent] = useState(false);
+            const [sentCode, setSentCode] = useState('');
+            const [botVerified, setBotVerified] = useState(false);
+            const [showCaptchaModal, setShowCaptchaModal] = useState(false);
+            const [captchaCheckedSquares, setCaptchaCheckedSquares] = useState(Array(9).fill(false));
+            const [captchaVerifying, setCaptchaVerifying] = useState(false);
+            const [captchaError, setCaptchaError] = useState(false);
+            
             const [regUsername, setRegUsername] = useState('');
-            const [regEmail, setRegEmail] = useState('');
-            const [regPassword, setRegPassword] = useState('');
             const [regAgeGroup, setRegAgeGroup] = useState('ya');
-            const [topupAmount, setTopupAmount] = useState('20');
-            const [listTitle, setListTitle] = useState('');
-            const [listAuthor, setListAuthor] = useState('');
-            const [listPrice, setListPrice] = useState('');
-            const [listDesc, setListDesc] = useState('');
-            const [listType, setListType] = useState('sell');
+
             const [clubName, setClubName] = useState('');
             const [clubDesc, setClubDesc] = useState('');
             const [clubTime, setClubTime] = useState('');
@@ -238,16 +237,14 @@ export function renderBookHaven(): string {
                 if (!auth) return;
                 try {
                     // Load in parallel
-                    const [libData, catData, sugData, feedData, challengeData, clubData, forumData, marketData, walletData] = await Promise.all([
+                    const [libData, catData, sugData, feedData, challengeData, clubData, forumData] = await Promise.all([
                         apiFetch('/api/books/library'),
                         apiFetch(\`/api/books/catalogue?category=\${ageGroup}\`),
                         apiFetch('/api/books/suggestions'),
                         apiFetch('/api/books/feed'),
                         apiFetch('/api/books/challenges'),
                         apiFetch(\`/api/books/clubs?category=\${ageGroup}\`),
-                        apiFetch(\`/api/books/forum?category=\${ageGroup}\`),
-                        apiFetch('/api/books/marketplace'),
-                        apiFetch('/api/books/wallet')
+                        apiFetch(\`/api/books/forum?category=\${ageGroup}\`)
                     ]);
 
                     setLibrary(libData);
@@ -257,8 +254,6 @@ export function renderBookHaven(): string {
                     setChallenges(challengeData);
                     setClubs(clubData);
                     setForumThreads(forumData);
-                    setMarketplace(marketData);
-                    setWallet(walletData);
 
                     // Cache offline data
                     localStorage.setItem('offline_/api/books/library', JSON.stringify(libData));
@@ -292,14 +287,56 @@ export function renderBookHaven(): string {
             };
 
             // Authentication Handler
+            // OTP Verification Dispatch
+            const [otpLoading, setOtpLoading] = useState(false);
+
+            const handleSendOtp = async (e) => {
+                e.preventDefault();
+                setErrorMsg('');
+                if (!authIdentifier) {
+                    setErrorMsg('Email or Mobile number is required');
+                    return;
+                }
+                if (!botVerified) {
+                    setErrorMsg('Please complete the "I\'m not a robot" check first.');
+                    return;
+                }
+                setOtpLoading(true);
+                try {
+                    const res = await apiFetch('/api/books/auth/send-otp', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            identifier: authIdentifier,
+                            bot_verified: true
+                        })
+                    });
+                    if (res.success) {
+                        setOtpSent(true);
+                        if (res.otp) {
+                            setSentCode(res.otp);
+                        }
+                    }
+                } catch (err) {
+                    setErrorMsg(err.message || 'Failed to send OTP code');
+                } finally {
+                    setOtpLoading(false);
+                }
+            };
+
+            // Authentication Handler
             const handleAuthSubmit = async (e) => {
                 e.preventDefault();
                 setErrorMsg('');
+                if (!authIdentifier || !authOtp) {
+                    setErrorMsg('Identifier and OTP code are required');
+                    return;
+                }
+                
                 try {
                     if (authMode === 'login') {
                         const res = await apiFetch('/api/books/auth/login', {
                             method: 'POST',
-                            body: JSON.stringify({ email: loginEmail, password: loginPassword })
+                            body: JSON.stringify({ identifier: authIdentifier, otp: authOtp })
                         });
                         if (res.success) {
                             localStorage.setItem('bh_token', res.token);
@@ -307,14 +344,24 @@ export function renderBookHaven(): string {
                             setAuth({ token: res.token, user: res.user });
                             setAgeGroup(res.user.age_group);
                             setShowAuthModal(false);
+                            // Reset states
+                            setAuthIdentifier('');
+                            setAuthOtp('');
+                            setOtpSent(false);
+                            setSentCode('');
+                            setBotVerified(false);
                         }
                     } else if (authMode === 'register') {
+                        if (!regUsername) {
+                            setErrorMsg('Username is required');
+                            return;
+                        }
                         const res = await apiFetch('/api/books/auth/register', {
                             method: 'POST',
                             body: JSON.stringify({
                                 username: regUsername,
-                                email: regEmail,
-                                password: regPassword,
+                                identifier: authIdentifier,
+                                otp: authOtp,
                                 age_group: regAgeGroup
                             })
                         });
@@ -324,12 +371,67 @@ export function renderBookHaven(): string {
                             setAuth({ token: res.token, user: res.user });
                             setAgeGroup(res.user.age_group);
                             setShowAuthModal(false);
+                            // Reset states
+                            setAuthIdentifier('');
+                            setAuthOtp('');
+                            setOtpSent(false);
+                            setSentCode('');
+                            setBotVerified(false);
+                            setRegUsername('');
                         }
                     }
                 } catch (err) {
                     setErrorMsg(err.message || 'Authentication failed');
                 }
             };
+
+            // Bot Captcha Sim Handlers
+            const handleCaptchaClick = () => {
+                if (botVerified) return;
+                setCaptchaError(false);
+                setCaptchaCheckedSquares(Array(9).fill(false));
+                setShowCaptchaModal(true);
+            };
+
+            const toggleCaptchaSquare = (idx) => {
+                setCaptchaCheckedSquares(prev => {
+                    const next = [...prev];
+                    next[idx] = !next[idx];
+                    return next;
+                });
+            };
+
+            const CAPTCHA_ITEMS = [
+                { icon: 'fa-book', isTarget: true },
+                { icon: 'fa-car', isTarget: false },
+                { icon: 'fa-plane', isTarget: false },
+                { icon: 'fa-book', isTarget: true },
+                { icon: 'fa-apple-whole', isTarget: false },
+                { icon: 'fa-bicycle', isTarget: false },
+                { icon: 'fa-book', isTarget: true },
+                { icon: 'fa-dog', isTarget: false },
+                { icon: 'fa-cat', isTarget: false }
+            ];
+
+            const verifyCaptchaPuzzle = () => {
+                // Verify that checked items match isTarget items
+                const isCorrect = CAPTCHA_ITEMS.every((item, idx) => {
+                    return item.isTarget === captchaCheckedSquares[idx];
+                });
+                
+                if (isCorrect) {
+                    setCaptchaVerifying(true);
+                    setTimeout(() => {
+                        setBotVerified(true);
+                        setCaptchaVerifying(false);
+                        setShowCaptchaModal(false);
+                    }, 1200);
+                } else {
+                    setCaptchaError(true);
+                    setCaptchaCheckedSquares(Array(9).fill(false));
+                }
+            };
+
 
             // OAuth Simulation (Google, Facebook, Microsoft, Apple ID)
             const handleOauthSimulate = (providerName) => {
@@ -667,14 +769,6 @@ export function renderBookHaven(): string {
                         <div class="flex items-center gap-4">
                             {auth ? (
                                 <div class="flex items-center gap-4">
-                                    {/* Wallet Balance widget */}
-                                    <div class="hidden sm:flex items-center gap-2.5 bg-slate-900/60 border border-slate-750 px-3.5 py-1.5 rounded-xl">
-                                        <i class="fas fa-wallet text-brand-400"></i>
-                                        <span class="text-sm font-semibold">\${wallet.balance?.toFixed(2)}</span>
-                                        <button onClick={() => setShowTopupModal(true)} class="bg-brand-500/20 hover:bg-brand-500 text-brand-300 hover:text-slate-950 text-xs px-2 py-1 rounded-lg font-bold transition duration-300 ml-1">
-                                            + Topup
-                                        </button>
-                                    </div>
                                     
                                     {/* Notifications Button */}
                                     <div class="relative">
@@ -690,10 +784,6 @@ export function renderBookHaven(): string {
                                                     <div class="flex gap-3">
                                                         <div class="w-2 h-2 mt-1.5 bg-brand-500 rounded-full flex-shrink-0"></div>
                                                         <p class="text-slate-300"><span class="text-white font-semibold">Sarah Jenkins</span> joined the Fantasy Expedition book club room.</p>
-                                                    </div>
-                                                    <div class="flex gap-3">
-                                                        <div class="w-2 h-2 mt-1.5 bg-brand-500 rounded-full flex-shrink-0"></div>
-                                                        <p class="text-slate-300">Your marketplace listing for <span class="text-white font-semibold">"Dune"</span> has been bought!</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -732,12 +822,10 @@ export function renderBookHaven(): string {
                                 { id: 'manga', label: 'Manga Hub', icon: 'fa-book-open-reader' },
                                 { id: 'social', label: 'Social Feed', icon: 'fa-rss' },
                                 { id: 'clubs', label: 'Book Clubs', icon: 'fa-users' },
-                                { id: 'forum', label: 'Forums', icon: 'fa-comments' },
-                                { id: 'marketplace', label: 'Marketplace', icon: 'fa-store' }
+                                { id: 'forum', label: 'Forums', icon: 'fa-comments' }
                             ].map(tab => (
-
-                                <button key={tab.id} onClick={() => { setActiveTab(tab.id); setActiveThread(null); }} class={\`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition duration-350 \${activeTab === tab.id ? 'bg-slate-800 text-white shadow-sm border border-slate-700/60' : 'text-slate-400 hover:text-slate-200'}\`}>
-                                    <i class={\`fas \${tab.icon} text-xs text-brand-400\`}></i>
+                                <button key={tab.id} onClick={() => { setActiveTab(tab.id); setActiveThread(null); }} class={'flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition duration-350 ' + (activeTab === tab.id ? 'bg-slate-800 text-white shadow-sm border border-slate-700/60' : 'text-slate-400 hover:text-slate-200')}>
+                                    <i class={'fas ' + tab.icon + ' text-xs text-brand-400'}></i>
                                     {tab.label}
                                 </button>
                             ))}
@@ -763,7 +851,7 @@ export function renderBookHaven(): string {
                                                     </div>
                                                     <div>
                                                         <h2 class="text-xl font-bold font-outfit text-white">{auth.user?.username}</h2>
-                                                        <p class="text-xs text-slate-400">Library: {library.length} books • Wallet: \${wallet.balance?.toFixed(2)}</p>
+                                                        <p class="text-xs text-slate-400">Library: {library.length} books</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1272,63 +1360,12 @@ export function renderBookHaven(): string {
                                 </div>
                             )}
 
-                            {/* MARKETPLACE VIEW */}
-                            {activeTab === 'marketplace' && (
-                                <div class="space-y-6 animate-fadeIn">
-                                    <div class="flex justify-between items-center bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-                                        <div>
-                                            <h3 class="text-lg font-bold font-outfit text-white">Book Trading & Selling Platform</h3>
-                                            <p class="text-xs text-slate-400">Buy secondary market books with your virtual wallet</p>
-                                        </div>
-                                        <button onClick={() => setShowCreateListingModal(true)} class="bg-brand-500 hover:bg-brand-400 text-slate-950 px-5 py-2.5 rounded-xl font-bold text-sm transition duration-300">
-                                            List New Book
-                                        </button>
-                                    </div>
-
-                                    {marketplace.length > 0 ? (
-                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                            {marketplace.map(list => (
-                                                <div key={list.id} class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
-                                                    <div class="space-y-3">
-                                                        <div class="flex justify-between items-start">
-                                                            <span class={\`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border \${list.listing_type === 'sell' ? 'bg-amber-500/10 text-amber-300 border-amber-500/25' : 'bg-blue-500/10 text-blue-300 border-blue-500/25'}\`}>
-                                                                {list.listing_type}
-                                                            </span>
-                                                            <span class="text-lg font-bold text-white">\${list.price.toFixed(2)}</span>
-                                                        </div>
-                                                        <h4 class="font-bold text-xl text-white font-outfit">{list.book_title}</h4>
-                                                        <p class="text-xs text-slate-400">By {list.book_author}</p>
-                                                        <p class="text-sm text-slate-350 line-clamp-2">{list.description}</p>
-                                                    </div>
-                                                    
-                                                    <div class="mt-6 border-t border-slate-800/80 pt-4 flex justify-between items-center">
-                                                        <span class="text-xs text-slate-500">Seller: {list.seller_name}</span>
-                                                        {list.seller_id !== auth.user.id ? (
-                                                            <button onClick={() => buyMarketplaceBook(list.id)} class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition duration-300">
-                                                                Buy with Wallet
-                                                            </button>
-                                                        ) : (
-                                                            <span class="text-xs text-slate-500 italic">Your Listing</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div class="h-64 flex flex-col items-center justify-center text-slate-500">
-                                            <i class="fas fa-store-slash text-3xl mb-3 text-slate-650"></i>
-                                            <span>No listings currently active. Be the first to list a book!</span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                        </main>
+                         </main>
                     ) : (
                         /* Standard guest call-to-action view */
                         <main class="flex-grow flex flex-col items-center justify-center max-w-2xl mx-auto text-center px-6">
                             <h1 class="text-5xl font-black font-outfit text-white leading-tight mb-4">The Complete Social Reading Community</h1>
-                            <p class="text-slate-400 text-lg mb-8 leading-relaxed">Securely maintain personal libraries, check reading percentages, earn coins in the marketplace, and stream live conversations with your virtual book club.</p>
+                            <p class="text-slate-400 text-lg mb-8 leading-relaxed">Securely maintain personal libraries, check reading percentages, track manga, and stream live conversations with your virtual book club.</p>
                             <button onClick={() => setShowAuthModal(true)} class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold px-8 py-4 rounded-2xl text-base shadow-lg shadow-brand-500/10 transition duration-300">
                                 Create Your Account Now
                             </button>
@@ -1338,69 +1375,6 @@ export function renderBookHaven(): string {
                     {/* VIRTUAL VIDEO CHAT ROOM MODAL/WIDGET */}
                     {activeClubRoom && (
                         <VideoChatRoom club={activeClubRoom} onClose={() => setActiveClubRoom(null)} />
-                    )}
-
-                    {/* WALLET TOPUP MODAL */}
-                    {showTopupModal && (
-                        <div class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
-                            <div class="glass-card rounded-3xl p-6 w-full max-w-md border border-slate-800">
-                                <div class="flex justify-between items-center mb-6">
-                                    <h3 class="text-xl font-bold font-outfit text-white">Top Up Virtual Wallet</h3>
-                                    <button onClick={() => setShowTopupModal(false)} class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
-                                </div>
-                                <form onSubmit={handleTopup} class="space-y-4">
-                                    <div>
-                                        <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Simulated Amount ($)</label>
-                                        <input type="number" value={topupAmount} onChange={(e) => setTopupAmount(e.target.value)} required min="1" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-500 text-white" />
-                                    </div>
-                                    <button type="submit" class="w-full bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold py-3 rounded-xl transition duration-300">
-                                        Complete Mock Top-Up
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* CREATE LISTING MODAL */}
-                    {showCreateListingModal && (
-                        <div class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 overflow-y-auto">
-                            <div class="glass-card rounded-3xl p-6 w-full max-w-md border border-slate-800">
-                                <div class="flex justify-between items-center mb-6">
-                                    <h3 class="text-xl font-bold font-outfit text-white">Create Marketplace Listing</h3>
-                                    <button onClick={() => setShowCreateListingModal(false)} class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
-                                </div>
-                                <form onSubmit={handleCreateListing} class="space-y-4">
-                                    <div>
-                                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Book Title</label>
-                                        <input type="text" value={listTitle} onChange={(e) => setListTitle(e.target.value)} required placeholder="e.g. The Fellowship of the Ring" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Author</label>
-                                        <input type="text" value={listAuthor} onChange={(e) => setListAuthor(e.target.value)} required placeholder="J.R.R. Tolkien" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Price ($)</label>
-                                            <input type="number" step="0.01" value={listPrice} onChange={(e) => setListPrice(e.target.value)} required placeholder="9.99" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Listing Type</label>
-                                            <select value={listType} onChange={(e) => setListType(e.target.value)} class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm h-11">
-                                                <option value="sell">Sell</option>
-                                                <option value="trade">Trade</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Item Condition / Details</label>
-                                        <textarea value={listDesc} onChange={(e) => setListDesc(e.target.value)} rows="3" placeholder="Paperback, pristine condition..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm"></textarea>
-                                    </div>
-                                    <button type="submit" class="w-full bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold py-3 rounded-xl transition duration-300">
-                                        Post Marketplace Listing
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
                     )}
 
                     {/* CREATE BOOK CLUB MODAL */}
@@ -1491,23 +1465,31 @@ export function renderBookHaven(): string {
                                         </div>
                                     </div>
                                 ) : (
-                                    <form onSubmit={handleAuthSubmit} class="space-y-4">
-                                        {authMode === 'register' && (
+                                    <form onSubmit={otpSent ? handleAuthSubmit : handleSendOtp} class="space-y-4">
+                                        {/* Username (only on registration) */}
+                                        {authMode === 'register' && !otpSent && (
                                             <div>
                                                 <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Username</label>
                                                 <input type="text" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} required placeholder="John Doe" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
                                             </div>
                                         )}
-                                        <div>
-                                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Email Address</label>
-                                            <input type="email" value={authMode === 'login' ? loginEmail : regEmail} onChange={(e) => authMode === 'login' ? setLoginEmail(e.target.value) : setRegEmail(e.target.value)} required placeholder="you@example.com" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Password</label>
-                                            <input type="password" value={authMode === 'login' ? loginPassword : regPassword} onChange={(e) => authMode === 'login' ? setLoginPassword(e.target.value) : setRegPassword(e.target.value)} required placeholder="••••••••" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
-                                        </div>
-                                        
-                                        {authMode === 'register' && (
+
+                                        {/* Identifier: Mobile or Email (only visible if OTP is not sent yet) */}
+                                        {!otpSent ? (
+                                            <div>
+                                                <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Email or Mobile Number</label>
+                                                <input type="text" value={authIdentifier} onChange={(e) => setAuthIdentifier(e.target.value)} required placeholder="you@example.com or +1234567890" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
+                                            </div>
+                                        ) : (
+                                            <div class="bg-slate-900/60 border border-slate-850 p-4 rounded-xl space-y-2">
+                                                <p class="text-xs text-slate-400">Verifying Identity:</p>
+                                                <p class="text-sm font-bold text-white font-outfit">{authIdentifier}</p>
+                                                <button type="button" onClick={() => { setOtpSent(false); setAuthOtp(''); }} class="text-[10px] text-brand-400 hover:text-brand-300 font-semibold"><i class="fas fa-edit mr-1"></i>Edit Address / Number</button>
+                                            </div>
+                                        )}
+
+                                        {/* Age Classification (only on registration before OTP) */}
+                                        {authMode === 'register' && !otpSent && (
                                             <div>
                                                 <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Age Classification</label>
                                                 <select value={regAgeGroup} onChange={(e) => setRegAgeGroup(e.target.value)} class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm h-11">
@@ -1517,8 +1499,49 @@ export function renderBookHaven(): string {
                                             </div>
                                         )}
 
-                                        <button type="submit" class="w-full bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold py-3 rounded-xl text-sm transition duration-300 mt-2 shadow-lg shadow-brand-500/10">
-                                            {authMode === 'login' ? 'Sign In' : 'Create Account'}
+                                        {/* "I'm not a robot" Verification Widget (only visible if OTP not sent yet) */}
+                                        {!otpSent && (
+                                            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between my-4 select-none">
+                                                <div class="flex items-center gap-3">
+                                                    <div onClick={handleCaptchaClick} class="w-6 h-6 border-2 border-slate-700 rounded bg-slate-800 flex items-center justify-center cursor-pointer transition hover:border-brand-500">
+                                                        {captchaVerifying ? (
+                                                            <i class="fas fa-circle-notch fa-spin text-brand-400 text-xs"></i>
+                                                        ) : botVerified ? (
+                                                            <i class="fas fa-check text-brand-400 text-sm"></i>
+                                                        ) : null}
+                                                    </div>
+                                                    <span class="text-xs font-semibold text-slate-355">I'm not a robot</span>
+                                                </div>
+                                                <div class="flex flex-col items-end opacity-60">
+                                                    <i class="fab fa-react text-brand-400 text-lg"></i>
+                                                    <span class="text-[8px] text-slate-500 mt-0.5">reCAPTCHA Sim</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* OTP Input box (visible after OTP is sent) */}
+                                        {otpSent && (
+                                            <div class="space-y-2">
+                                                <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Enter 6-Digit OTP Code</label>
+                                                <input type="text" maxLength="6" value={authOtp} onChange={(e) => setAuthOtp(e.target.value)} required placeholder="123456" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 tracking-widest text-center text-lg font-bold focus:outline-none focus:border-brand-500 text-white" />
+                                                
+                                                {sentCode && (
+                                                    <div class="bg-brand-500/10 border border-brand-500/20 rounded-xl p-3 text-center text-xs text-brand-300 font-semibold my-2">
+                                                        [DEV MODE] Simulated SMS/Email Code: <span class="text-white font-mono font-bold tracking-wider">{sentCode}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Action Button */}
+                                        <button type="submit" disabled={otpLoading} class="w-full bg-brand-500 hover:bg-brand-400 disabled:bg-brand-500/40 text-slate-950 font-bold py-3 rounded-xl text-sm transition duration-300 mt-2 shadow-lg shadow-brand-500/10 flex items-center justify-center gap-2">
+                                            {otpLoading ? (
+                                                <i class="fas fa-circle-notch fa-spin"></i>
+                                            ) : otpSent ? (
+                                                'Verify & Complete'
+                                            ) : (
+                                                'Send Verification OTP'
+                                            )}
                                         </button>
 
                                         {/* Divider */}
@@ -1545,12 +1568,56 @@ export function renderBookHaven(): string {
                                         </div>
 
                                         <div class="text-center mt-6">
-                                            <button type="button" onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} class="text-brand-400 hover:text-brand-300 text-xs font-semibold">
+                                            <button type="button" onClick={() => { setAuthMode(authMode === 'login' ? 'register' : 'login'); setOtpSent(false); setAuthOtp(''); }} class="text-brand-400 hover:text-brand-300 text-xs font-semibold">
                                                 {authMode === 'login' ? 'Need an account? Sign Up' : 'Already registered? Sign In'}
                                             </button>
                                         </div>
                                     </form>
                                 )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ROBOT CAPTCHA SIMULATOR MODAL */}
+                    {showCaptchaModal && (
+                        <div class="fixed inset-0 bg-slate-950/90 z-55 flex items-center justify-center p-4">
+                            <div class="glass-card rounded-3xl p-6 w-full max-w-sm border border-slate-800 shadow-2xl space-y-4">
+                                <div class="bg-brand-500 text-slate-950 p-4 rounded-2xl flex items-center justify-between animate-pulse">
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-wider opacity-80">Security Check</p>
+                                        <h3 class="text-lg font-bold font-outfit">Select all books</h3>
+                                    </div>
+                                    <i class="fas fa-shield-halved text-2xl"></i>
+                                </div>
+                                <p class="text-xs text-slate-400 leading-relaxed">Select all grid cells containing a book to verify you are not a robot.</p>
+                                
+                                {captchaError && (
+                                    <p class="text-xs text-red-400 font-semibold bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg text-center">Incorrect selection. Please try again.</p>
+                                )}
+
+                                <div class="grid grid-cols-3 gap-3">
+                                    {CAPTCHA_ITEMS.map((item, idx) => (
+                                        <div key={idx} onClick={() => toggleCaptchaSquare(idx)} class={'aspect-square rounded-xl flex items-center justify-center border-2 cursor-pointer transition select-none ' + (captchaCheckedSquares[idx] ? 'border-brand-500 bg-brand-500/20 text-brand-300' : 'border-slate-800 bg-slate-900 hover:border-slate-700 text-slate-500')}>
+                                            <i class={'fas ' + item.icon + ' text-2xl'}></i>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div class="flex gap-2 pt-2">
+                                    <button onClick={verifyCaptchaPuzzle} disabled={captchaVerifying} class="flex-grow bg-brand-500 hover:bg-brand-400 disabled:bg-brand-500/50 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                                        {captchaVerifying ? (
+                                            <>
+                                                <i class="fas fa-circle-notch fa-spin"></i>
+                                                Verifying...
+                                            </>
+                                        ) : (
+                                            'Verify Selection'
+                                        )}
+                                    </button>
+                                    <button onClick={() => setShowCaptchaModal(false)} class="bg-slate-800 hover:bg-slate-750 text-slate-300 font-semibold px-4 py-2.5 rounded-xl text-xs transition">
+                                        Cancel
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}

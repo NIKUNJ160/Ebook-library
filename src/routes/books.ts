@@ -45,85 +45,115 @@ async function getAuthUser(c: Context) {
     return user;
 }
 
-// ─── AUTHENTICATION ENDPOINTS ───
+// ─── AUTHENTICATION ENDPOINTS (PASSWORDLESS OTP) ───
 
-// Standard Password Register
+// Helper to verify OTP
+async function verifyOTPCode(db: any, identifier: string, code: string): Promise<boolean> {
+    const record = await db.prepare(
+        'SELECT * FROM otp_verifications WHERE identifier = ? AND otp_code = ? AND expires_at > ?'
+    ).bind(identifier.trim(), code.trim(), Date.now()).first() as any;
+    
+    if (record) {
+        // Delete OTP so it cannot be reused
+        await db.prepare('DELETE FROM otp_verifications WHERE id = ?').bind(record.id).run();
+        return true;
+    }
+    return false;
+}
+
+// Send OTP code
+booksApp.post('/api/books/auth/send-otp', async (c) => {
+    const { identifier, bot_verified } = await c.req.json();
+    if (!identifier) {
+        return c.json({ error: 'Identifier (Email or Mobile number) is required' }, 400);
+    }
+    if (!bot_verified) {
+        return c.json({ error: 'Bot verification failed. Please check the "I\'m not a robot" box.' }, 400);
+    }
+    
+    const cleanId = identifier.trim();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+    
+    try {
+        await c.env.DB.prepare('DELETE FROM otp_verifications WHERE identifier = ?').bind(cleanId).run();
+        
+        await c.env.DB.prepare(
+            'INSERT INTO otp_verifications (identifier, otp_code, expires_at) VALUES (?, ?, ?)'
+        ).bind(cleanId, otp, expiresAt).run();
+        
+        console.log(`[OTP Verification] Code ${otp} generated for ${cleanId}`);
+        
+        return c.json({
+            success: true,
+            message: 'Verification OTP has been sent.',
+            otp
+        });
+    } catch (err: any) {
+        return c.json({ error: err.message || 'Failed to dispatch verification code' }, 500);
+    }
+});
+
+// Passwordless Register
 booksApp.post('/api/books/auth/register', async (c) => {
-    const { username, email, password, age_group } = await c.req.json();
-    if (!username || !email || !password) {
-        return c.json({ error: 'Username, email and password are required' }, 400);
+    const { username, identifier, otp, age_group } = await c.req.json();
+    if (!username || !identifier || !otp) {
+        return c.json({ error: 'Username, identifier, and OTP are required' }, 400);
+    }
+    
+    const cleanId = identifier.trim();
+    const isVerified = await verifyOTPCode(c.env.DB, cleanId, otp);
+    if (!isVerified) {
+        return c.json({ error: 'Invalid or expired OTP verification code' }, 400);
     }
     
     try {
-        const passHash = await hashPassword(password);
-        const userId = email.toLowerCase().trim();
+        const isEmail = cleanId.includes('@');
+        const email = isEmail ? cleanId.toLowerCase() : null;
+        const mobile = isEmail ? null : cleanId;
+        const userId = cleanId.toLowerCase();
         
         await c.env.DB.prepare(
-            'INSERT INTO ebook_users (id, username, email, provider, age_group, wallet_balance) VALUES (?, ?, ?, ?, ?, ?)'
-        ).bind(userId, username, userId, 'local', age_group || 'ya', 50.00).run(); // Start with $50.00 in virtual wallet
-        
-        // Log transaction for registration bonus
-        await c.env.DB.prepare(
-            'INSERT INTO wallet_transactions (user_id, amount, type, description) VALUES (?, ?, ?, ?)'
-        ).bind(userId, 50.00, 'topup', 'Registration Bonus').run();
-        
-        // Register in primary auth user table so login lookup works
-        try {
-            await c.env.DB.prepare(
-                'INSERT INTO users (username, password_hash) VALUES (?, ?)'
-            ).bind(userId, passHash).run();
-        } catch {
-            // Already exists in users table, ignore
-        }
+            'INSERT INTO ebook_users (id, username, email, mobile_number, provider, age_group) VALUES (?, ?, ?, ?, ?, ?)'
+        ).bind(userId, username, email, mobile, 'local', age_group || 'ya').run();
         
         const token = await createSessionToken(userId as any, username, c.env.JWT_SECRET_KEY);
         
         return c.json({
             success: true,
             token,
-            user: { id: userId, username, email: userId, age_group, wallet_balance: 50.00 }
+            user: { id: userId, username, email, mobile_number: mobile, age_group: age_group || 'ya' }
         });
     } catch (err: any) {
         if (err.message && err.message.includes('UNIQUE')) {
-            return c.json({ error: 'Email already registered' }, 400);
+            return c.json({ error: 'This email or mobile number is already registered' }, 400);
         }
         return c.json({ error: err.message || 'Registration failed' }, 500);
     }
 });
 
-// Standard Password Login
+// Passwordless Login
 booksApp.post('/api/books/auth/login', async (c) => {
-    const { email, password } = await c.req.json();
-    if (!email || !password) {
-        return c.json({ error: 'Email and password are required' }, 400);
+    const { identifier, otp } = await c.req.json();
+    if (!identifier || !otp) {
+        return c.json({ error: 'Identifier and OTP are required' }, 400);
     }
     
-    const userId = email.toLowerCase().trim();
-    // Re-use admin password hashes for simplicity or query standard users if matching hashes exist
-    // Standard user might not exist yet, let's query ebook_users
+    const cleanId = identifier.trim();
+    const isVerified = await verifyOTPCode(c.env.DB, cleanId, otp);
+    if (!isVerified) {
+        return c.json({ error: 'Invalid or expired OTP verification code' }, 400);
+    }
+    
     const user = await c.env.DB.prepare(
-        'SELECT * FROM ebook_users WHERE id = ? AND provider = ?'
-    ).bind(userId, 'local').first() as any;
+        'SELECT * FROM ebook_users WHERE (email = ? OR mobile_number = ?) AND provider = ?'
+    ).bind(cleanId.toLowerCase(), cleanId, 'local').first() as any;
     
     if (!user) {
-        // Create dummy matching record or check credentials
-        return c.json({ error: 'User not found or invalid provider' }, 401);
+        return c.json({ error: 'No account registered with this email or mobile number' }, 404);
     }
     
-    // We will verify against password_hash. Wait, since ebook_users doesn't store password_hash directly to keep schemas clean,
-    // let's lookup from the local users table OR let's support password checking by checking if the user profile password matches.
-    // Ah, let's verify using standard credential check. Since we want standard password check, let's verify if the username matches or password hashes match.
-    // For local registration we stored the hash in the main portfolio 'users' table or ebook_users! Let's check:
-    // To make auth robust, let's see if the user exists in 'users' table.
-    const userCredentials = await c.env.DB.prepare(
-        'SELECT password_hash FROM users WHERE username = ?'
-    ).bind(userId).first() as any;
-    
-    if (!userCredentials || !(await verifyPassword(password, userCredentials.password_hash))) {
-        return c.json({ error: 'Invalid credentials' }, 401);
-    }
-    
-    const token = await createSessionToken(userId as any, user.username, c.env.JWT_SECRET_KEY);
+    const token = await createSessionToken(user.id as any, user.username, c.env.JWT_SECRET_KEY);
     return c.json({
         success: true,
         token,
@@ -140,21 +170,15 @@ booksApp.post('/api/books/auth/oauth', async (c) => {
     
     const userId = `${provider}_${email.toLowerCase().trim()}`;
     
-    // Check if user exists
     let user = await c.env.DB.prepare(
         'SELECT * FROM ebook_users WHERE id = ?'
     ).bind(userId).first() as any;
     
     if (!user) {
-        // Create user
         try {
             await c.env.DB.prepare(
-                'INSERT INTO ebook_users (id, username, email, provider, age_group, wallet_balance, avatar_url) VALUES (?, ?, ?, ?, ?, ?, ?)'
-            ).bind(userId, name, email, provider, 'ya', 100.00, `https://api.dicebear.com/7.x/bottts/svg?seed=${name}`).run(); // Premium bonus
-            
-            await c.env.DB.prepare(
-                'INSERT INTO wallet_transactions (user_id, amount, type, description) VALUES (?, ?, ?, ?)'
-            ).bind(userId, 100.00, 'topup', `${provider} OAuth Registration Bonus`).run();
+                'INSERT INTO ebook_users (id, username, email, provider, age_group, avatar_url) VALUES (?, ?, ?, ?, ?, ?)'
+            ).bind(userId, name, email, provider, 'ya', `https://api.dicebear.com/7.x/bottts/svg?seed=${name}`).run();
             
             user = {
                 id: userId,
@@ -162,7 +186,6 @@ booksApp.post('/api/books/auth/oauth', async (c) => {
                 email,
                 provider,
                 age_group: 'ya',
-                wallet_balance: 100.00,
                 avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${name}`
             };
         } catch (err: any) {
@@ -177,6 +200,7 @@ booksApp.post('/api/books/auth/oauth', async (c) => {
         user
     });
 });
+
 
 // Get user profile/status
 booksApp.get('/api/books/auth/me', async (c) => {
@@ -466,137 +490,7 @@ booksApp.post('/api/books/forum/thread/:id/reply', async (c) => {
     return c.json({ success: true });
 });
 
-// ─── WALLET & TRANSACTIONS ───
 
-booksApp.get('/api/books/wallet', async (c) => {
-    const user = await getAuthUser(c);
-    if (!user) return c.json({ error: 'Unauthorized' }, 401);
-    
-    const txs = await c.env.DB.prepare(
-        'SELECT * FROM wallet_transactions WHERE user_id = ? ORDER BY created_at DESC'
-    ).bind(user.id).all() as any;
-    
-    return c.json({
-        balance: user.wallet_balance,
-        transactions: txs.results || []
-    });
-});
-
-booksApp.post('/api/books/wallet/topup', async (c) => {
-    const user = await getAuthUser(c);
-    if (!user) return c.json({ error: 'Unauthorized' }, 401);
-    
-    const { amount } = await c.req.json();
-    if (!amount || amount <= 0) return c.json({ error: 'Invalid amount' }, 400);
-    
-    const newBalance = user.wallet_balance + amount;
-    
-    await c.env.DB.prepare('UPDATE ebook_users SET wallet_balance = ? WHERE id = ?').bind(newBalance, user.id).run();
-    await c.env.DB.prepare(
-        'INSERT INTO wallet_transactions (user_id, amount, type, description) VALUES (?, ?, ?, ?)'
-    ).bind(user.id, amount, 'topup', 'Wallet Top-Up').run();
-    
-    return c.json({ success: true, balance: newBalance });
-});
-
-// ─── MARKETPLACE (SELL & TRADE) ───
-
-booksApp.get('/api/books/marketplace', async (c) => {
-    const listings = await c.env.DB.prepare(
-        `SELECT l.*, u.username as seller_name
-         FROM marketplace_listings l
-         JOIN ebook_users u ON l.seller_id = u.id
-         WHERE l.status = 'active'
-         ORDER BY l.created_at DESC`
-    ).all() as any;
-    
-    return c.json(listings.results || []);
-});
-
-booksApp.post('/api/books/marketplace/list', async (c) => {
-    const user = await getAuthUser(c);
-    if (!user) return c.json({ error: 'Unauthorized' }, 401);
-    
-    const { title, author, description, price, listing_type } = await c.req.json();
-    if (!title || !author || price === undefined) {
-        return c.json({ error: 'Title, author, and price are required' }, 400);
-    }
-    
-    await c.env.DB.prepare(
-        'INSERT INTO marketplace_listings (seller_id, book_title, book_author, description, price, listing_type) VALUES (?, ?, ?, ?, ?, ?)'
-    ).bind(user.id, title, author, description || '', price, listing_type || 'sell').run();
-    
-    return c.json({ success: true });
-});
-
-// Purchase item using the Wallet Payment system
-booksApp.post('/api/books/marketplace/buy', async (c) => {
-    const user = await getAuthUser(c);
-    if (!user) return c.json({ error: 'Unauthorized' }, 401);
-    
-    const { listing_id } = await c.req.json();
-    const listing = await c.env.DB.prepare(
-        'SELECT * FROM marketplace_listings WHERE id = ? AND status = ?'
-    ).bind(listing_id, 'active').first() as any;
-    
-    if (!listing) return c.json({ error: 'Listing not active or not found' }, 404);
-    if (listing.seller_id === user.id) return c.json({ error: 'You cannot buy your own book' }, 400);
-    
-    // Check funds
-    if (user.wallet_balance < listing.price) {
-        return c.json({ error: 'Insufficient wallet balance' }, 400);
-    }
-    
-    // Perform transaction atomically
-    const buyerNewBalance = user.wallet_balance - listing.price;
-    
-    // Get seller profile to update balance
-    const seller = await c.env.DB.prepare(
-        'SELECT * FROM ebook_users WHERE id = ?'
-    ).bind(listing.seller_id).first() as any;
-    
-    if (!seller) return c.json({ error: 'Seller not found' }, 404);
-    const sellerNewBalance = seller.wallet_balance + listing.price;
-    
-    // 1. Update buyer balance
-    await c.env.DB.prepare('UPDATE ebook_users SET wallet_balance = ? WHERE id = ?').bind(buyerNewBalance, user.id).run();
-    // 2. Update seller balance
-    await c.env.DB.prepare('UPDATE ebook_users SET wallet_balance = ? WHERE id = ?').bind(sellerNewBalance, listing.seller_id).run();
-    // 3. Mark listing sold
-    await c.env.DB.prepare('UPDATE marketplace_listings SET status = ? WHERE id = ?').bind('sold', listing.id).run();
-    
-    // 4. Create transaction records
-    await c.env.DB.prepare(
-        'INSERT INTO wallet_transactions (user_id, amount, type, description) VALUES (?, ?, ?, ?)'
-    ).bind(user.id, -listing.price, 'purchase', `Purchased "${listing.book_title}"`).run();
-    
-    await c.env.DB.prepare(
-        'INSERT INTO wallet_transactions (user_id, amount, type, description) VALUES (?, ?, ?, ?)'
-    ).bind(listing.seller_id, listing.price, 'sale', `Sold "${listing.book_title}"`).run();
-    
-    // Add book to buyer's collection
-    // Check if book metadata exists in catalog first
-    let book = await c.env.DB.prepare(
-        'SELECT * FROM books WHERE title = ? AND author = ?'
-    ).bind(listing.book_title, listing.book_author).first() as any;
-    
-    if (!book) {
-        // Insert custom book
-        await c.env.DB.prepare(
-            'INSERT INTO books (title, author, cover_url, category, total_pages) VALUES (?, ?, ?, ?, ?)'
-        ).bind(listing.book_title, listing.book_author, 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=150&auto=format&fit=crop', 'ya', 250).run();
-        
-        book = await c.env.DB.prepare(
-            'SELECT * FROM books WHERE title = ? AND author = ?'
-        ).bind(listing.book_title, listing.book_author).first() as any;
-    }
-    
-    await c.env.DB.prepare(
-        'INSERT INTO user_books (user_id, book_id, status, progress_percent) VALUES (?, ?, ?, ?)'
-    ).bind(user.id, book.id, 'want_to_read', 0).run();
-    
-    return c.json({ success: true, balance: buyerNewBalance });
-});
 
 // ─── READING CHALLENGES ───
 
