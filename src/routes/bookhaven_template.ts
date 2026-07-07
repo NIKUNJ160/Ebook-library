@@ -298,7 +298,7 @@ export function renderBookHaven(): string {
                     return;
                 }
                 if (!botVerified) {
-                    setErrorMsg('Please complete the "I\'m not a robot" check first.');
+                    setErrorMsg('Please complete the robot verification check first.');
                     return;
                 }
                 setOtpLoading(true);
