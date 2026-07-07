@@ -161,15 +161,7 @@ export function renderBookHaven(): string {
             
             // Form states
             const [authIdentifier, setAuthIdentifier] = useState('');
-            const [authOtp, setAuthOtp] = useState('');
-            const [otpSent, setOtpSent] = useState(false);
-            const [sentCode, setSentCode] = useState('');
-            const [botVerified, setBotVerified] = useState(false);
-            const [showCaptchaModal, setShowCaptchaModal] = useState(false);
-            const [captchaCheckedSquares, setCaptchaCheckedSquares] = useState(Array(9).fill(false));
-            const [captchaVerifying, setCaptchaVerifying] = useState(false);
-            const [captchaError, setCaptchaError] = useState(false);
-            
+
             const [regUsername, setRegUsername] = useState('');
             const [regAgeGroup, setRegAgeGroup] = useState('ya');
 
@@ -284,59 +276,23 @@ export function renderBookHaven(): string {
                 localStorage.removeItem('bh_user');
                 setAuth(null);
                 setShowAuthModal(true);
-            };
-
-            // Authentication Handler
-            // OTP Verification Dispatch
+            };            // Authentication Handler
             const [otpLoading, setOtpLoading] = useState(false);
 
-            const handleSendOtp = async (e) => {
-                e.preventDefault();
-                setErrorMsg('');
-                if (!authIdentifier) {
-                    setErrorMsg('Email or Mobile number is required');
-                    return;
-                }
-                if (!botVerified) {
-                    setErrorMsg('Please complete the robot verification check first.');
-                    return;
-                }
-                setOtpLoading(true);
-                try {
-                    const res = await apiFetch('/api/books/auth/send-otp', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            identifier: authIdentifier,
-                            bot_verified: true
-                        })
-                    });
-                    if (res.success) {
-                        setOtpSent(true);
-                        if (res.otp) {
-                            setSentCode(res.otp);
-                        }
-                    }
-                } catch (err) {
-                    setErrorMsg(err.message || 'Failed to send OTP code');
-                } finally {
-                    setOtpLoading(false);
-                }
-            };
-
-            // Authentication Handler
             const handleAuthSubmit = async (e) => {
                 e.preventDefault();
                 setErrorMsg('');
-                if (!authIdentifier || !authOtp) {
-                    setErrorMsg('Identifier and OTP code are required');
+                if (!authIdentifier) {
+                    setErrorMsg('Identifier is required');
                     return;
                 }
                 
+                setOtpLoading(true);
                 try {
                     if (authMode === 'login') {
                         const res = await apiFetch('/api/books/auth/login', {
                             method: 'POST',
-                            body: JSON.stringify({ identifier: authIdentifier, otp: authOtp })
+                            body: JSON.stringify({ identifier: authIdentifier })
                         });
                         if (res.success) {
                             localStorage.setItem('bh_token', res.token);
@@ -344,16 +300,12 @@ export function renderBookHaven(): string {
                             setAuth({ token: res.token, user: res.user });
                             setAgeGroup(res.user.age_group);
                             setShowAuthModal(false);
-                            // Reset states
                             setAuthIdentifier('');
-                            setAuthOtp('');
-                            setOtpSent(false);
-                            setSentCode('');
-                            setBotVerified(false);
                         }
                     } else if (authMode === 'register') {
                         if (!regUsername) {
                             setErrorMsg('Username is required');
+                            setOtpLoading(false);
                             return;
                         }
                         const res = await apiFetch('/api/books/auth/register', {
@@ -361,7 +313,6 @@ export function renderBookHaven(): string {
                             body: JSON.stringify({
                                 username: regUsername,
                                 identifier: authIdentifier,
-                                otp: authOtp,
                                 age_group: regAgeGroup
                             })
                         });
@@ -371,96 +322,14 @@ export function renderBookHaven(): string {
                             setAuth({ token: res.token, user: res.user });
                             setAgeGroup(res.user.age_group);
                             setShowAuthModal(false);
-                            // Reset states
                             setAuthIdentifier('');
-                            setAuthOtp('');
-                            setOtpSent(false);
-                            setSentCode('');
-                            setBotVerified(false);
                             setRegUsername('');
                         }
                     }
                 } catch (err) {
                     setErrorMsg(err.message || 'Authentication failed');
-                }
-            };
-
-            // Bot Captcha Sim Handlers
-            const handleCaptchaClick = () => {
-                if (botVerified) return;
-                setCaptchaError(false);
-                setCaptchaCheckedSquares(Array(9).fill(false));
-                setShowCaptchaModal(true);
-            };
-
-            const toggleCaptchaSquare = (idx) => {
-                setCaptchaCheckedSquares(prev => {
-                    const next = [...prev];
-                    next[idx] = !next[idx];
-                    return next;
-                });
-            };
-
-            const CAPTCHA_ITEMS = [
-                { icon: 'fa-book', isTarget: true },
-                { icon: 'fa-car', isTarget: false },
-                { icon: 'fa-plane', isTarget: false },
-                { icon: 'fa-book', isTarget: true },
-                { icon: 'fa-apple-whole', isTarget: false },
-                { icon: 'fa-bicycle', isTarget: false },
-                { icon: 'fa-book', isTarget: true },
-                { icon: 'fa-dog', isTarget: false },
-                { icon: 'fa-cat', isTarget: false }
-            ];
-
-            const verifyCaptchaPuzzle = () => {
-                // Verify that checked items match isTarget items
-                const isCorrect = CAPTCHA_ITEMS.every((item, idx) => {
-                    return item.isTarget === captchaCheckedSquares[idx];
-                });
-                
-                if (isCorrect) {
-                    setCaptchaVerifying(true);
-                    setTimeout(() => {
-                        setBotVerified(true);
-                        setCaptchaVerifying(false);
-                        setShowCaptchaModal(false);
-                    }, 1200);
-                } else {
-                    setCaptchaError(true);
-                    setCaptchaCheckedSquares(Array(9).fill(false));
-                }
-            };
-
-
-            // OAuth Simulation (Google, Facebook, Microsoft, Apple ID)
-            const handleOauthSimulate = (providerName) => {
-                setOauthProvider(providerName);
-                setAuthMode('oauth');
-                setErrorMsg('');
-            };
-
-            const completeOauth = async () => {
-                try {
-                    const res = await apiFetch('/api/books/auth/oauth', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            provider: oauthProvider.toLowerCase(),
-                            name: \`Demo \${oauthProvider} User\`,
-                            email: \`demo.\${oauthProvider.toLowerCase()}@bookhaven.com\`
-                        })
-                    });
-                    if (res.success) {
-                        localStorage.setItem('bh_token', res.token);
-                        localStorage.setItem('bh_user', JSON.stringify(res.user));
-                        setAuth({ token: res.token, user: res.user });
-                        setAgeGroup(res.user.age_group);
-                        setShowAuthModal(false);
-                        setOauthProvider(null);
-                        setAuthMode('login');
-                    }
-                } catch (err) {
-                    setErrorMsg('OAuth simulation failed');
+                } finally {
+                    setOtpLoading(false);
                 }
             };
 
@@ -1465,31 +1334,23 @@ export function renderBookHaven(): string {
                                         </div>
                                     </div>
                                 ) : (
-                                    <form onSubmit={otpSent ? handleAuthSubmit : handleSendOtp} class="space-y-4">
+                                    <form onSubmit={handleAuthSubmit} class="space-y-4">
                                         {/* Username (only on registration) */}
-                                        {authMode === 'register' && !otpSent && (
+                                        {authMode === 'register' && (
                                             <div>
                                                 <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Username</label>
                                                 <input type="text" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} required placeholder="John Doe" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
                                             </div>
                                         )}
 
-                                        {/* Identifier: Mobile or Email (only visible if OTP is not sent yet) */}
-                                        {!otpSent ? (
-                                            <div>
-                                                <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Email or Mobile Number</label>
-                                                <input type="text" value={authIdentifier} onChange={(e) => setAuthIdentifier(e.target.value)} required placeholder="you@example.com or +1234567890" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
-                                            </div>
-                                        ) : (
-                                            <div class="bg-slate-900/60 border border-slate-850 p-4 rounded-xl space-y-2">
-                                                <p class="text-xs text-slate-400">Verifying Identity:</p>
-                                                <p class="text-sm font-bold text-white font-outfit">{authIdentifier}</p>
-                                                <button type="button" onClick={() => { setOtpSent(false); setAuthOtp(''); }} class="text-[10px] text-brand-400 hover:text-brand-300 font-semibold"><i class="fas fa-edit mr-1"></i>Edit Address / Number</button>
-                                            </div>
-                                        )}
+                                        {/* Identifier: Mobile or Email */}
+                                        <div>
+                                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Email or Mobile Number</label>
+                                            <input type="text" value={authIdentifier} onChange={(e) => setAuthIdentifier(e.target.value)} required placeholder="you@example.com or +1234567890" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
+                                        </div>
 
-                                        {/* Age Classification (only on registration before OTP) */}
-                                        {authMode === 'register' && !otpSent && (
+                                        {/* Age Classification (only on registration) */}
+                                        {authMode === 'register' && (
                                             <div>
                                                 <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Age Classification</label>
                                                 <select value={regAgeGroup} onChange={(e) => setRegAgeGroup(e.target.value)} class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm h-11">
@@ -1499,121 +1360,24 @@ export function renderBookHaven(): string {
                                             </div>
                                         )}
 
-                                        {/* "I'm not a robot" Verification Widget (only visible if OTP not sent yet) */}
-                                        {!otpSent && (
-                                            <div onClick={handleCaptchaClick} class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between my-4 select-none cursor-pointer hover:border-slate-700 transition">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="w-6 h-6 border-2 border-slate-700 rounded bg-slate-800 flex items-center justify-center transition hover:border-brand-500">
-                                                        {captchaVerifying ? (
-                                                            <i class="fas fa-circle-notch fa-spin text-brand-400 text-xs"></i>
-                                                        ) : botVerified ? (
-                                                            <i class="fas fa-check text-brand-400 text-sm"></i>
-                                                        ) : null}
-                                                    </div>
-                                                    <span class="text-xs font-semibold text-slate-300">I'm not a robot</span>
-                                                </div>
-                                                <div class="flex flex-col items-end opacity-60">
-                                                    <i class="fab fa-react text-brand-400 text-lg"></i>
-                                                    <span class="text-[8px] text-slate-500 mt-0.5">reCAPTCHA Sim</span>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* OTP Input box (visible after OTP is sent) */}
-                                        {otpSent && (
-                                            <div class="space-y-2">
-                                                <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Enter 6-Digit OTP Code</label>
-                                                <input type="text" maxLength={6} maxlength="6" value={authOtp} onChange={(e) => setAuthOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} required placeholder="123456" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 tracking-widest text-center text-lg font-bold focus:outline-none focus:border-brand-500 text-white" />
-                                                
-                                                {/* Simulated notification alert removed for realistic experience */}
-                                            </div>
-                                        )}
-
                                         {/* Action Button */}
                                         <button type="submit" disabled={otpLoading} class="w-full bg-brand-500 hover:bg-brand-400 disabled:bg-brand-500/40 text-slate-950 font-bold py-3 rounded-xl text-sm transition duration-300 mt-2 shadow-lg shadow-brand-500/10 flex items-center justify-center gap-2">
                                             {otpLoading ? (
                                                 <i class="fas fa-circle-notch fa-spin"></i>
-                                            ) : otpSent ? (
-                                                'Verify & Complete'
+                                            ) : authMode === 'login' ? (
+                                                'Sign In'
                                             ) : (
-                                                'Send Verification OTP'
+                                                'Create Account'
                                             )}
                                         </button>
 
-                                        {/* Divider */}
-                                        <div class="flex items-center my-6">
-                                            <div class="flex-grow border-t border-slate-800"></div>
-                                            <span class="px-3 text-xs text-slate-500 uppercase font-bold tracking-wider">Social Login Option</span>
-                                            <div class="flex-grow border-t border-slate-800"></div>
-                                        </div>
-
-                                        {/* Real simulated social login buttons */}
-                                        <div class="grid grid-cols-2 gap-3">
-                                            <button type="button" onClick={() => handleOauthSimulate('Google')} class="bg-slate-800 hover:bg-slate-750 text-white text-xs font-bold py-2.5 rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition duration-300">
-                                                <i class="fab fa-google text-red-500"></i> Google
-                                            </button>
-                                            <button type="button" onClick={() => handleOauthSimulate('Facebook')} class="bg-slate-800 hover:bg-slate-750 text-white text-xs font-bold py-2.5 rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition duration-300">
-                                                <i class="fab fa-facebook text-blue-500"></i> Facebook
-                                            </button>
-                                            <button type="button" onClick={() => handleOauthSimulate('Microsoft')} class="bg-slate-800 hover:bg-slate-750 text-white text-xs font-bold py-2.5 rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition duration-300">
-                                                <i class="fab fa-windows text-blue-400"></i> Microsoft
-                                            </button>
-                                            <button type="button" onClick={() => handleOauthSimulate('AppleId')} class="bg-slate-800 hover:bg-slate-750 text-white text-xs font-bold py-2.5 rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition duration-300">
-                                                <i class="fab fa-apple text-slate-200"></i> Apple ID
-                                            </button>
-                                        </div>
-
                                         <div class="text-center mt-6">
-                                            <button type="button" onClick={() => { setAuthMode(authMode === 'login' ? 'register' : 'login'); setOtpSent(false); setAuthOtp(''); }} class="text-brand-400 hover:text-brand-300 text-xs font-semibold">
+                                            <button type="button" onClick={() => { setAuthMode(authMode === 'login' ? 'register' : 'login'); }} class="text-brand-400 hover:text-brand-300 text-xs font-semibold">
                                                 {authMode === 'login' ? 'Need an account? Sign Up' : 'Already registered? Sign In'}
                                             </button>
                                         </div>
                                     </form>
                                 )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* ROBOT CAPTCHA SIMULATOR MODAL */}
-                    {showCaptchaModal && (
-                        <div class="fixed inset-0 bg-slate-950/90 flex items-center justify-center p-4" style={{ zIndex: 60 }}>
-                            <div class="glass-card rounded-3xl p-6 w-full max-w-sm border border-slate-800 shadow-2xl space-y-4">
-                                <div class="bg-brand-500 text-slate-950 p-4 rounded-2xl flex items-center justify-between animate-pulse">
-                                    <div>
-                                        <p class="text-[10px] font-bold uppercase tracking-wider opacity-80">Security Check</p>
-                                        <h3 class="text-lg font-bold font-outfit">Select all books</h3>
-                                    </div>
-                                    <i class="fas fa-shield-halved text-2xl"></i>
-                                </div>
-                                <p class="text-xs text-slate-400 leading-relaxed">Select all grid cells containing a book to verify you are not a robot.</p>
-                                
-                                {captchaError && (
-                                    <p class="text-xs text-red-400 font-semibold bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg text-center">Incorrect selection. Please try again.</p>
-                                )}
-
-                                <div class="grid grid-cols-3 gap-3">
-                                    {CAPTCHA_ITEMS.map((item, idx) => (
-                                        <div key={idx} onClick={() => toggleCaptchaSquare(idx)} class={'aspect-square rounded-xl flex items-center justify-center border-2 cursor-pointer transition select-none ' + (captchaCheckedSquares[idx] ? 'border-brand-500 bg-brand-500/20 text-brand-300' : 'border-slate-800 bg-slate-900 hover:border-slate-700 text-slate-500')}>
-                                            <i class={'fas ' + item.icon + ' text-2xl'}></i>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div class="flex gap-2 pt-2">
-                                    <button onClick={verifyCaptchaPuzzle} disabled={captchaVerifying} class="flex-grow bg-brand-500 hover:bg-brand-400 disabled:bg-brand-500/50 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
-                                        {captchaVerifying ? (
-                                            <>
-                                                <i class="fas fa-circle-notch fa-spin"></i>
-                                                Verifying...
-                                            </>
-                                        ) : (
-                                            'Verify Selection'
-                                        )}
-                                    </button>
-                                    <button onClick={() => setShowCaptchaModal(false)} class="bg-slate-800 hover:bg-slate-750 text-slate-300 font-semibold px-4 py-2.5 rounded-xl text-xs transition">
-                                        Cancel
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     )}

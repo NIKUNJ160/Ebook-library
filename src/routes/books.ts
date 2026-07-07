@@ -96,16 +96,12 @@ booksApp.post('/api/books/auth/send-otp', async (c) => {
 
 // Passwordless Register
 booksApp.post('/api/books/auth/register', async (c) => {
-    const { username, identifier, otp, age_group } = await c.req.json();
-    if (!username || !identifier || !otp) {
-        return c.json({ error: 'Username, identifier, and OTP are required' }, 400);
+    const { username, identifier, age_group } = await c.req.json();
+    if (!username || !identifier) {
+        return c.json({ error: 'Username and identifier are required' }, 400);
     }
     
     const cleanId = identifier.trim();
-    const isVerified = await verifyOTPCode(c.env.DB, cleanId, otp);
-    if (!isVerified) {
-        return c.json({ error: 'Invalid or expired OTP verification code' }, 400);
-    }
     
     try {
         const isEmail = cleanId.includes('@');
@@ -134,16 +130,12 @@ booksApp.post('/api/books/auth/register', async (c) => {
 
 // Passwordless Login
 booksApp.post('/api/books/auth/login', async (c) => {
-    const { identifier, otp } = await c.req.json();
-    if (!identifier || !otp) {
-        return c.json({ error: 'Identifier and OTP are required' }, 400);
+    const { identifier } = await c.req.json();
+    if (!identifier) {
+        return c.json({ error: 'Identifier is required' }, 400);
     }
     
     const cleanId = identifier.trim();
-    const isVerified = await verifyOTPCode(c.env.DB, cleanId, otp);
-    if (!isVerified) {
-        return c.json({ error: 'Invalid or expired OTP verification code' }, 400);
-    }
     
     const user = await c.env.DB.prepare(
         'SELECT * FROM ebook_users WHERE (email = ? OR mobile_number = ?) AND provider = ?'
