@@ -153,8 +153,7 @@ export function renderBookHaven(): string {
             
             // Modals
             const [showAuthModal, setShowAuthModal] = useState(!auth);
-            const [authMode, setAuthMode] = useState('login'); // login, register, oauth
-            const [oauthProvider, setOauthProvider] = useState(null);
+            const [authMode, setAuthMode] = useState('login'); // login, register
             const [showCreateClubModal, setShowCreateClubModal] = useState(false);
             const [showCreateThreadModal, setShowCreateThreadModal] = useState(false);
             const [showNotifications, setShowNotifications] = useState(false);
@@ -1304,9 +1303,9 @@ export function renderBookHaven(): string {
                     {showAuthModal && (
                         <div class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 overflow-y-auto">
                             <div class="glass-card rounded-3xl p-8 w-full max-w-md border border-slate-800 shadow-2xl relative">
-                                {auth && (
-                                    <button onClick={() => setShowAuthModal(false)} class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
-                                )}
+                                <button onClick={() => setShowAuthModal(false)} class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors duration-150 p-2 rounded-lg hover:bg-slate-800/50" aria-label="Close modal">
+                                    <i class="fas fa-times text-lg"></i>
+                                </button>
                                 <div class="text-center mb-8">
                                     <h2 class="text-3xl font-extrabold font-outfit text-white">Welcome to BookHaven</h2>
                                     <p class="text-slate-450 text-xs mt-1">Manage reading logs, social reviews and Virtual book clubs</p>
@@ -1318,23 +1317,7 @@ export function renderBookHaven(): string {
                                     </div>
                                 )}
 
-                                {authMode === 'oauth' ? (
-                                    <div class="space-y-6 text-center">
-                                        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-sm">
-                                            <p class="text-slate-300">Simulate OAuth 2.0 Auth Callback Flow from <span class="text-brand-400 font-bold">{oauthProvider}</span> Identity Provider?</p>
-                                            <p class="text-xs text-slate-500 mt-2">This creates a real profile row in Cloudflare D1 database and yields your secure JWT session tokens locally.</p>
-                                        </div>
-                                        <div class="flex gap-2">
-                                            <button onClick={completeOauth} class="flex-grow bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold py-3 rounded-xl text-sm transition">
-                                                Simulate Authorize
-                                            </button>
-                                            <button onClick={() => setAuthMode('login')} class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 px-6 rounded-xl text-sm transition">
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <form onSubmit={handleAuthSubmit} class="space-y-4">
+                                <form onSubmit={handleAuthSubmit} class="space-y-4">
                                         {/* Username (only on registration) */}
                                         {authMode === 'register' && (
                                             <div>
@@ -1377,7 +1360,6 @@ export function renderBookHaven(): string {
                                             </button>
                                         </div>
                                     </form>
-                                )}
                             </div>
                         </div>
                     )}
