@@ -1501,16 +1501,16 @@ export function renderBookHaven(): string {
 
                                         {/* "I'm not a robot" Verification Widget (only visible if OTP not sent yet) */}
                                         {!otpSent && (
-                                            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between my-4 select-none">
+                                            <div onClick={handleCaptchaClick} class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between my-4 select-none cursor-pointer hover:border-slate-700 transition">
                                                 <div class="flex items-center gap-3">
-                                                    <div onClick={handleCaptchaClick} class="w-6 h-6 border-2 border-slate-700 rounded bg-slate-800 flex items-center justify-center cursor-pointer transition hover:border-brand-500">
+                                                    <div class="w-6 h-6 border-2 border-slate-700 rounded bg-slate-800 flex items-center justify-center transition hover:border-brand-500">
                                                         {captchaVerifying ? (
                                                             <i class="fas fa-circle-notch fa-spin text-brand-400 text-xs"></i>
                                                         ) : botVerified ? (
                                                             <i class="fas fa-check text-brand-400 text-sm"></i>
                                                         ) : null}
                                                     </div>
-                                                    <span class="text-xs font-semibold text-slate-355">I'm not a robot</span>
+                                                    <span class="text-xs font-semibold text-slate-300">I'm not a robot</span>
                                                 </div>
                                                 <div class="flex flex-col items-end opacity-60">
                                                     <i class="fab fa-react text-brand-400 text-lg"></i>
@@ -1580,7 +1580,7 @@ export function renderBookHaven(): string {
 
                     {/* ROBOT CAPTCHA SIMULATOR MODAL */}
                     {showCaptchaModal && (
-                        <div class="fixed inset-0 bg-slate-950/90 z-55 flex items-center justify-center p-4">
+                        <div class="fixed inset-0 bg-slate-950/90 flex items-center justify-center p-4" style={{ zIndex: 60 }}>
                             <div class="glass-card rounded-3xl p-6 w-full max-w-sm border border-slate-800 shadow-2xl space-y-4">
                                 <div class="bg-brand-500 text-slate-950 p-4 rounded-2xl flex items-center justify-between animate-pulse">
                                     <div>
