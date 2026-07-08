@@ -1,6 +1,6 @@
 export function renderBookHaven(): string {
     return `<!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,6 +11,16 @@ export function renderBookHaven(): string {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        (function() {
+            const saved = localStorage.getItem('theme');
+            if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
     <!-- Tailwind CSS Play CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -32,9 +42,20 @@ export function renderBookHaven(): string {
                             900: '#78350f',
                             950: '#451a03',
                         },
-                        darkBg: '#0f172a',
-                        darkCard: '#1e293b',
-                        darkBorder: '#334155'
+                        slate: {
+                            50: 'var(--slate-50)',
+                            100: 'var(--slate-100)',
+                            200: 'var(--slate-200)',
+                            300: 'var(--slate-300)',
+                            400: 'var(--slate-400)',
+                            500: 'var(--slate-500)',
+                            600: 'var(--slate-600)',
+                            700: 'var(--slate-700)',
+                            800: 'var(--slate-800)',
+                            850: 'var(--slate-850)',
+                            900: 'var(--slate-900)',
+                            950: 'var(--slate-950)'
+                        }
                     },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
@@ -45,9 +66,45 @@ export function renderBookHaven(): string {
         }
     </script>
     <style>
+        :root {
+            --slate-50: #0f172a;
+            --slate-100: #1e293b;
+            --slate-200: #334155;
+            --slate-300: #475569;
+            --slate-400: #64748b;
+            --slate-500: #64748b;
+            --slate-600: #94a3b8;
+            --slate-700: #cbd5e1;
+            --slate-800: #e2e8f0;
+            --slate-850: #edf2f7;
+            --slate-900: #f1f5f9;
+            --slate-950: #f8fafc;
+
+            --glass-card-bg: rgba(255, 255, 255, 0.7);
+            --glass-card-border: rgba(15, 23, 42, 0.08);
+            --glass-nav-bg: rgba(248, 250, 252, 0.85);
+        }
+        .dark {
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-400: #94a3b8;
+            --slate-500: #64748b;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --slate-850: #172033;
+            --slate-900: #0f172a;
+            --slate-950: #020617;
+
+            --glass-card-bg: rgba(30, 41, 59, 0.7);
+            --glass-card-border: rgba(255, 255, 255, 0.08);
+            --glass-nav-bg: rgba(15, 23, 42, 0.85);
+        }
         body {
-            background-color: #0f172a;
-            color: #f8fafc;
+            background-color: var(--slate-900);
+            color: var(--slate-100);
             font-family: 'Inter', sans-serif;
             overflow-x: hidden;
         }
@@ -57,27 +114,27 @@ export function renderBookHaven(): string {
             height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #0f172a;
+            background: var(--slate-900);
         }
         ::-webkit-scrollbar-thumb {
-            background: #334155;
+            background: var(--slate-700);
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
+            background: var(--slate-600);
         }
         /* Glassmorphism classes */
         .glass-card {
-            background: rgba(30, 41, 59, 0.7);
+            background: var(--glass-card-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--glass-card-border);
         }
         .glass-nav {
-            background: rgba(15, 23, 42, 0.8);
+            background: var(--glass-nav-bg);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid var(--glass-card-border);
         }
         /* Active status indicator */
         .online-dot {
@@ -91,7 +148,7 @@ export function renderBookHaven(): string {
             width: 10px;
             height: 10px;
             background-color: #22c55e;
-            border: 2px solid #1e293b;
+            border: 2px solid var(--slate-800);
             border-radius: 50%;
         }
     </style>
@@ -123,6 +180,26 @@ export function renderBookHaven(): string {
         };
 
         function App() {
+            const [isDarkMode, setIsDarkMode] = useState(() => {
+                const saved = localStorage.getItem('theme');
+                return saved ? saved === 'dark' : false;
+            });
+
+            useEffect(() => {
+                const root = document.documentElement;
+                if (isDarkMode) {
+                    root.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    root.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                }
+            }, [isDarkMode]);
+
+            const toggleTheme = () => {
+                setIsDarkMode(!isDarkMode);
+            };
+
             const [auth, setAuth] = useState(getStoredAuth());
             const [activeTab, setActiveTab] = useState('home');
             const [ageGroup, setAgeGroup] = useState(auth?.user?.age_group || 'ya');
@@ -554,10 +631,10 @@ export function renderBookHaven(): string {
                 }, []);
 
                 return (
-                    <div class="fixed inset-0 bg-slate-950/90 z-50 flex flex-col p-6 overflow-y-auto">
+                    <div class="fixed inset-0 bg-black/90 z-50 flex flex-col p-6 overflow-y-auto">
                         <div class="flex justify-between items-center mb-6">
                             <div>
-                                <span class="bg-brand-500 text-slate-950 font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider">Live Virtual Club</span>
+                                <span class="bg-brand-500 text-black font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider">Live Virtual Club</span>
                                 <h2 class="text-2xl font-bold font-outfit mt-1">{club.name} Discussion</h2>
                             </div>
                             <button onClick={() => {
@@ -568,11 +645,13 @@ export function renderBookHaven(): string {
                             </button>
                         </div>
                         
+                        {/* Live Video Feeds Grid */}
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow">
-                            {/* Local Video Stream */}
+                            
+                            {/* Local User Feed */}
                             <div class="glass-card rounded-2xl overflow-hidden relative aspect-video flex items-center justify-center bg-slate-900 border-2 border-brand-500/50">
                                 <video ref={localVideoRef} autoPlay playsInline muted class="w-full h-full object-cover"></video>
-                                <div class="absolute bottom-4 left-4 bg-slate-950/70 backdrop-blur-md text-white px-3 py-1 rounded-lg text-xs font-semibold">
+                                <div class="absolute bottom-4 left-4 bg-black/70 backdrop-blur-md text-white px-3 py-1 rounded-lg text-xs font-semibold">
                                     You (Local Feed)
                                 </div>
                             </div>
@@ -580,7 +659,7 @@ export function renderBookHaven(): string {
                             {/* Simulated Peer Feed 1 */}
                             <div class="glass-card rounded-2xl overflow-hidden relative aspect-video flex flex-col items-center justify-center bg-slate-850">
                                 <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop" class="w-full h-full object-cover opacity-80" />
-                                <div class="absolute bottom-4 left-4 bg-slate-950/70 backdrop-blur-md text-white px-3 py-1 rounded-lg text-xs font-semibold">
+                                <div class="absolute bottom-4 left-4 bg-black/70 backdrop-blur-md text-white px-3 py-1 rounded-lg text-xs font-semibold">
                                     Sarah Jenkins
                                 </div>
                             </div>
@@ -588,7 +667,7 @@ export function renderBookHaven(): string {
                             {/* Simulated Peer Feed 2 */}
                             <div class="glass-card rounded-2xl overflow-hidden relative aspect-video flex flex-col items-center justify-center bg-slate-850">
                                 <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop" class="w-full h-full object-cover opacity-80" />
-                                <div class="absolute bottom-4 left-4 bg-slate-950/70 backdrop-blur-md text-white px-3 py-1 rounded-lg text-xs font-semibold">
+                                <div class="absolute bottom-4 left-4 bg-black/70 backdrop-blur-md text-white px-3 py-1 rounded-lg text-xs font-semibold">
                                     Marcus Brody
                                 </div>
                             </div>
@@ -603,7 +682,7 @@ export function renderBookHaven(): string {
                             </div>
                             <div class="flex gap-2">
                                 <input type="text" placeholder="Add a comment to the live room..." class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 flex-grow focus:outline-none focus:border-brand-500 text-sm" />
-                                <button class="bg-brand-500 hover:bg-brand-400 text-slate-950 px-6 py-3 rounded-xl font-bold transition duration-300">Send</button>
+                                <button class="bg-brand-500 hover:bg-brand-400 text-black px-6 py-3 rounded-xl font-bold transition duration-300">Send</button>
                             </div>
                         </div>
                     </div>
@@ -615,7 +694,7 @@ export function renderBookHaven(): string {
                     {/* Header */}
                     <header class="glass-nav sticky top-0 z-40 px-6 py-4 flex justify-between items-center">
                         <div class="flex items-center gap-3">
-                            <div class="bg-brand-500 text-slate-950 w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/20">
+                            <div class="bg-brand-500 text-black w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/20">
                                 <i class="fas fa-book-open text-lg"></i>
                             </div>
                             <span class="text-2xl font-black tracking-tight font-outfit bg-gradient-to-r from-white via-slate-200 to-brand-400 bg-clip-text text-transparent">BookHaven</span>
@@ -624,10 +703,10 @@ export function renderBookHaven(): string {
                         {/* Middle Controls (YA vs Adult Toggle) */}
                         {auth && (
                             <div class="flex bg-slate-900 border border-slate-700/50 rounded-xl p-1">
-                                <button onClick={() => setAgeGroup('ya')} class={\`px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition duration-350 \${ageGroup === 'ya' ? 'bg-brand-500 text-slate-950' : 'text-slate-400 hover:text-white'}\`}>
+                                <button onClick={() => setAgeGroup('ya')} class={\`px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition duration-350 \${ageGroup === 'ya' ? 'bg-brand-500 text-black' : 'text-slate-400 hover:text-white'}\`}>
                                     Young Adult
                                 </button>
-                                <button onClick={() => setAgeGroup('adult')} class={\`px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition duration-350 \${ageGroup === 'adult' ? 'bg-brand-500 text-slate-950' : 'text-slate-400 hover:text-white'}\`}>
+                                <button onClick={() => setAgeGroup('adult')} class={\`px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition duration-350 \${ageGroup === 'adult' ? 'bg-brand-500 text-black' : 'text-slate-400 hover:text-white'}\`}>
                                     Adult (18+)
                                 </button>
                             </div>
@@ -635,6 +714,11 @@ export function renderBookHaven(): string {
 
                         {/* Right side controls */}
                         <div class="flex items-center gap-4">
+                            {/* Theme Toggler */}
+                            <button onClick={toggleTheme} class="p-2 text-slate-400 hover:text-brand-500 rounded-xl transition duration-300 flex items-center justify-center" title="Toggle Light/Dark Mode">
+                                <i class={isDarkMode ? "fas fa-sun text-lg text-amber-400" : "fas fa-moon text-lg text-slate-500"}></i>
+                            </button>
+
                             {auth ? (
                                 <div class="flex items-center gap-4">
                                     
@@ -673,7 +757,7 @@ export function renderBookHaven(): string {
                                     </div>
                                 </div>
                             ) : (
-                                <button onClick={() => setShowAuthModal(true)} class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold px-5 py-2 rounded-xl transition duration-350 shadow-md shadow-brand-500/10 text-sm">
+                                <button onClick={() => setShowAuthModal(true)} class="bg-brand-500 hover:bg-brand-400 text-black font-bold px-5 py-2 rounded-xl transition duration-350 shadow-md shadow-brand-500/10 text-sm">
                                     Get Started
                                 </button>
                             )}
@@ -765,7 +849,7 @@ export function renderBookHaven(): string {
                                                             {ch.joined ? (
                                                                 <span class="text-xs text-slate-400 font-bold">{ch.books_read || 0} / {ch.target_count} books</span>
                                                             ) : (
-                                                                <button onClick={() => joinChallenge(ch.id)} class="text-xs bg-brand-500 text-slate-950 px-2 py-1 rounded font-bold hover:bg-brand-400">Join</button>
+                                                                <button onClick={() => joinChallenge(ch.id)} class="text-xs bg-brand-500 text-black px-2 py-1 rounded font-bold hover:bg-brand-400">Join</button>
                                                             )}
                                                         </div>
                                                         {ch.joined && (
@@ -793,7 +877,7 @@ export function renderBookHaven(): string {
                                                 <div key={book.id} class="glass-card rounded-xl p-4 flex flex-col justify-between hover:scale-105 transition duration-300">
                                                     <div class="aspect-[3/4] rounded-lg overflow-hidden bg-slate-800 mb-3 border border-slate-700 relative">
                                                         <img src={book.cover_url} class="w-full h-full object-cover" />
-                                                        <span class="absolute top-2 right-2 bg-slate-950/85 text-[10px] font-bold px-2 py-0.5 rounded-full text-brand-400">{book.genre}</span>
+                                                        <span class="absolute top-2 right-2 bg-black/80 text-[10px] font-bold px-2 py-0.5 rounded-full text-brand-400">{book.genre}</span>
                                                     </div>
                                                     <div>
                                                         <h4 class="font-bold text-sm text-white line-clamp-1">{book.title}</h4>
@@ -819,7 +903,7 @@ export function renderBookHaven(): string {
                                         </div>
                                         <div class="flex gap-2 w-full sm:w-auto">
                                             {['all', 'reading', 'want_to_read', 'finished'].map(status => (
-                                                <button key={status} onClick={() => setFilterStatus(status)} class={\`px-4 py-2 rounded-xl text-xs font-semibold capitalize transition duration-300 \${filterStatus === status ? 'bg-brand-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:bg-slate-750'}\`}>
+                                                <button key={status} onClick={() => setFilterStatus(status)} class={\`px-4 py-2 rounded-xl text-xs font-semibold capitalize transition duration-300 \${filterStatus === status ? 'bg-brand-500 text-black' : 'bg-slate-800 text-slate-300 hover:bg-slate-750'}\`}>
                                                     {status.replace(/_/g, ' ')}
                                                 </button>
                                             ))}
@@ -839,7 +923,7 @@ export function renderBookHaven(): string {
                                                         <div>
                                                             <div class="aspect-[3/4] rounded-xl overflow-hidden bg-slate-800 mb-4 border border-slate-700 relative">
                                                                 <img src={book.cover_url} class="w-full h-full object-cover" />
-                                                                <span class="absolute top-3 right-3 bg-brand-500 text-slate-950 font-bold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">{book.status}</span>
+                                                                <span class="absolute top-3 right-3 bg-brand-500 text-black font-bold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">{book.status}</span>
                                                             </div>
                                                             <h4 class="font-bold text-lg text-white leading-tight font-outfit">{book.title}</h4>
                                                             <p class="text-xs text-slate-400 mt-1 mb-4">{book.author}</p>
@@ -904,7 +988,7 @@ export function renderBookHaven(): string {
                                             <input type="text" placeholder="Search entire catalog..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 pl-10 w-full focus:outline-none focus:border-brand-500 text-sm" />
                                             <i class="fas fa-search absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
                                         </div>
-                                        <button onClick={() => setShowCreateListingModal(true)} class="bg-brand-500 hover:bg-brand-400 text-slate-950 px-6 py-2.5 rounded-xl font-bold text-sm transition duration-300 shadow-lg shadow-brand-500/10">
+                                        <button onClick={() => setShowCreateListingModal(true)} class="bg-brand-500 hover:bg-brand-400 text-black px-6 py-2.5 rounded-xl font-bold text-sm transition duration-300 shadow-lg shadow-brand-500/10">
                                             List Book for Sale/Trade
                                         </button>
                                     </div>
@@ -924,7 +1008,7 @@ export function renderBookHaven(): string {
                                                             <h4 class="font-bold text-sm text-white line-clamp-1">{book.title}</h4>
                                                             <p class="text-xs text-slate-400 mt-0.5 mb-3">{book.author}</p>
                                                         </div>
-                                                        <button onClick={() => addToLibrary(book.id)} class="w-full bg-brand-500/20 hover:bg-brand-500 text-brand-300 hover:text-slate-950 py-2 rounded-xl text-xs font-bold transition duration-300">
+                                                        <button onClick={() => addToLibrary(book.id)} class="w-full bg-brand-500/20 hover:bg-brand-500 text-brand-300 hover:text-black py-2 rounded-xl text-xs font-bold transition duration-300">
                                                             Add to Library
                                                         </button>
                                                     </div>
@@ -939,7 +1023,7 @@ export function renderBookHaven(): string {
                                 <div class="space-y-8 animate-fadeIn">
                                     <div class="bg-gradient-to-r from-brand-900/30 via-slate-900/80 to-slate-900/40 p-6 rounded-3xl border border-brand-500/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                                         <div>
-                                            <span class="bg-brand-500 text-slate-950 font-bold text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider">Manga & Manhua Hub</span>
+                                            <span class="bg-brand-500 text-black font-bold text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider">Manga & Manhua Hub</span>
                                             <h2 class="text-3xl font-extrabold font-outfit text-white mt-2">Natomanga Catalog</h2>
                                             <p class="text-sm text-slate-400 mt-1">Browse, filter, and track reading progress for the top Japanese Manga & Korean Manhwa.</p>
                                         </div>
@@ -960,7 +1044,7 @@ export function renderBookHaven(): string {
                                                 <h3 class="font-bold text-sm font-outfit uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2"><i class="fas fa-filter text-brand-400 mr-2"></i>Genres</h3>
                                                 <div class="flex flex-wrap gap-2">
                                                     {['all', 'Action', 'Fantasy', 'Romance', 'Drama', 'Adventure', 'Comedy', 'Mystery', 'Historical', 'Supernatural'].map(g => (
-                                                        <button key={g} onClick={() => setMangaGenre(g)} class={mangaGenre === g ? 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-brand-500 text-slate-950 font-bold' : 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-slate-800 hover:bg-slate-750 text-slate-355'}>
+                                                        <button key={g} onClick={() => setMangaGenre(g)} class={mangaGenre === g ? 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-brand-500 text-black font-bold' : 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-slate-800 hover:bg-slate-750 text-slate-355'}>
                                                             {g}
                                                         </button>
                                                     ))}
@@ -972,7 +1056,7 @@ export function renderBookHaven(): string {
                                                 <h3 class="font-bold text-sm font-outfit uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2"><i class="fas fa-tags text-brand-400 mr-2"></i>Tags</h3>
                                                 <div class="flex flex-wrap gap-2">
                                                     {['all', 'Reincarnation', 'Isekai', 'Webtoon', 'Slice of Life', 'Crime', 'Thriller'].map(t => (
-                                                        <button key={t} onClick={() => setMangaTag(t)} class={mangaTag === t ? 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-brand-500 text-slate-950 font-bold' : 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-slate-800 hover:bg-slate-750 text-slate-355'}>
+                                                        <button key={t} onClick={() => setMangaTag(t)} class={mangaTag === t ? 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-brand-500 text-black font-bold' : 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-slate-800 hover:bg-slate-750 text-slate-355'}>
                                                             {t}
                                                         </button>
                                                     ))}
@@ -1019,7 +1103,7 @@ export function renderBookHaven(): string {
                                                                 <div>
                                                                     <div class="aspect-[3/4] rounded-xl overflow-hidden bg-slate-850 mb-3 border border-slate-750 relative shadow-inner">
                                                                         <img src={manga.cover_url} class="w-full h-full object-cover" />
-                                                                        <span class="absolute bottom-2 left-2 bg-slate-950/80 backdrop-blur-sm text-[9px] font-bold px-2 py-0.5 rounded text-brand-300">{manga.category.toUpperCase()}</span>
+                                                                        <span class="absolute bottom-2 left-2 bg-black/80 backdrop-blur-sm text-[9px] font-bold px-2 py-0.5 rounded text-brand-300">{manga.category.toUpperCase()}</span>
                                                                     </div>
                                                                     <h4 class="font-bold text-sm text-white line-clamp-1 font-outfit" title={manga.title}>{manga.title}</h4>
                                                                     <p class="text-[11px] text-slate-400 mt-0.5 mb-2">{manga.author}</p>
@@ -1040,7 +1124,7 @@ export function renderBookHaven(): string {
                                                                         <input type="range" min="0" max="100" value={inLib.progress_percent} onChange={(e) => updateProgress(manga.id, parseInt(e.target.value))} class="w-full accent-brand-500 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer" />
                                                                     </div>
                                                                 ) : (
-                                                                    <button onClick={() => addToLibrary(manga.id)} class="w-full bg-brand-500 hover:bg-brand-400 text-slate-950 py-2 rounded-xl text-xs font-bold transition duration-300">
+                                                                    <button onClick={() => addToLibrary(manga.id)} class="w-full bg-brand-500 hover:bg-brand-400 text-black py-2 rounded-xl text-xs font-bold transition duration-300">
                                                                         Add to Library
                                                                     </button>
                                                                 )}
@@ -1106,7 +1190,7 @@ export function renderBookHaven(): string {
                                 <div class="space-y-6 animate-fadeIn">
                                     <div class="flex justify-between items-center bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
                                         <h3 class="text-lg font-bold font-outfit text-white">Virtual Book Clubs ({ageGroup.toUpperCase()})</h3>
-                                        <button onClick={() => setShowCreateClubModal(true)} class="bg-brand-500 hover:bg-brand-400 text-slate-950 px-5 py-2.5 rounded-xl font-bold text-sm transition duration-300">
+                                        <button onClick={() => setShowCreateClubModal(true)} class="bg-brand-500 hover:bg-brand-400 text-black px-5 py-2.5 rounded-xl font-bold text-sm transition duration-300">
                                             Start Virtual Club
                                         </button>
                                     </div>
@@ -1149,7 +1233,7 @@ export function renderBookHaven(): string {
                                         <>
                                             <div class="flex justify-between items-center bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
                                                 <h3 class="text-lg font-bold font-outfit text-white">Discussion Forum ({ageGroup.toUpperCase()})</h3>
-                                                <button onClick={() => setShowCreateThreadModal(true)} class="bg-brand-500 hover:bg-brand-400 text-slate-950 px-5 py-2.5 rounded-xl font-bold text-sm transition duration-300">
+                                                <button onClick={() => setShowCreateThreadModal(true)} class="bg-brand-500 hover:bg-brand-400 text-black px-5 py-2.5 rounded-xl font-bold text-sm transition duration-300">
                                                     New Discussion
                                                 </button>
                                             </div>
@@ -1219,7 +1303,7 @@ export function renderBookHaven(): string {
                                             <form onSubmit={handlePostReply} class="glass-card p-5 rounded-2xl border border-slate-800 space-y-4">
                                                 <h4 class="font-semibold text-sm">Post a reply</h4>
                                                 <textarea placeholder="Write your reply content..." value={replyContent} onChange={(e) => setReplyContent(e.target.value)} required rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-500"></textarea>
-                                                <button type="submit" class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold px-5 py-2 rounded-xl text-xs transition duration-300">
+                                                <button type="submit" class="bg-brand-500 hover:bg-brand-400 text-black font-bold px-5 py-2 rounded-xl text-xs transition duration-300">
                                                     Post Reply
                                                 </button>
                                             </form>
@@ -1234,7 +1318,7 @@ export function renderBookHaven(): string {
                         <main class="flex-grow flex flex-col items-center justify-center max-w-2xl mx-auto text-center px-6">
                             <h1 class="text-5xl font-black font-outfit text-white leading-tight mb-4">The Complete Social Reading Community</h1>
                             <p class="text-slate-400 text-lg mb-8 leading-relaxed">Securely maintain personal libraries, check reading percentages, track manga, and stream live conversations with your virtual book club.</p>
-                            <button onClick={() => setShowAuthModal(true)} class="bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold px-8 py-4 rounded-2xl text-base shadow-lg shadow-brand-500/10 transition duration-300">
+                            <button onClick={() => setShowAuthModal(true)} class="bg-brand-500 hover:bg-brand-400 text-black font-bold px-8 py-4 rounded-2xl text-base shadow-lg shadow-brand-500/10 transition duration-300">
                                 Create Your Account Now
                             </button>
                         </main>
@@ -1247,26 +1331,26 @@ export function renderBookHaven(): string {
 
                     {/* CREATE BOOK CLUB MODAL */}
                     {showCreateClubModal && (
-                        <div class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
+                        <div class="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
                             <div class="glass-card rounded-3xl p-6 w-full max-w-md border border-slate-800">
                                 <div class="flex justify-between items-center mb-6">
-                                    <h3 class="text-xl font-bold font-outfit text-white">Start Virtual Book Club</h3>
-                                    <button onClick={() => setShowCreateClubModal(false)} class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+                                    <h3 class="text-xl font-bold font-outfit text-slate-100">Start Virtual Book Club</h3>
+                                    <button onClick={() => setShowCreateClubModal(false)} class="text-slate-400 hover:text-slate-200"><i class="fas fa-times"></i></button>
                                 </div>
                                 <form onSubmit={handleCreateClub} class="space-y-4">
                                     <div>
                                         <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Club Name</label>
-                                        <input type="text" value={clubName} onChange={(e) => setClubName(e.target.value)} required placeholder="e.g. Tolkien Enthusiasts" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
+                                        <input type="text" value={clubName} onChange={(e) => setClubName(e.target.value)} required placeholder="e.g. Tolkien Enthusiasts" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-slate-100 text-sm" />
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Schedule Time</label>
-                                        <input type="text" value={clubTime} onChange={(e) => setClubTime(e.target.value)} placeholder="e.g. Fridays 6:00 PM EST" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
+                                        <input type="text" value={clubTime} onChange={(e) => setClubTime(e.target.value)} placeholder="e.g. Fridays 6:00 PM EST" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-slate-100 text-sm" />
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">About the Club</label>
-                                        <textarea value={clubDesc} onChange={(e) => setClubDesc(e.target.value)} rows="3" placeholder="Brief details about what we will read..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm"></textarea>
+                                        <textarea value={clubDesc} onChange={(e) => setClubDesc(e.target.value)} rows="3" placeholder="Brief details about what we will read..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-slate-100 text-sm"></textarea>
                                     </div>
-                                    <button type="submit" class="w-full bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold py-3 rounded-xl transition duration-300">
+                                    <button type="submit" class="w-full bg-brand-500 hover:bg-brand-400 text-[#0f172a] font-bold py-3 rounded-xl transition duration-300">
                                         Schedule Club Meeting
                                     </button>
                                 </form>
@@ -1276,22 +1360,22 @@ export function renderBookHaven(): string {
 
                     {/* CREATE THREAD MODAL */}
                     {showCreateThreadModal && (
-                        <div class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
+                        <div class="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
                             <div class="glass-card rounded-3xl p-6 w-full max-w-md border border-slate-800">
                                 <div class="flex justify-between items-center mb-6">
-                                    <h3 class="text-xl font-bold font-outfit text-white">Create New Discussion Topic</h3>
-                                    <button onClick={() => setShowCreateThreadModal(false)} class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+                                    <h3 class="text-xl font-bold font-outfit text-slate-100">Create New Discussion Topic</h3>
+                                    <button onClick={() => setShowCreateThreadModal(false)} class="text-slate-400 hover:text-slate-200"><i class="fas fa-times"></i></button>
                                 </div>
                                 <form onSubmit={handleCreateThread} class="space-y-4">
                                     <div>
                                         <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Topic Title</label>
-                                        <input type="text" value={threadTitle} onChange={(e) => setThreadTitle(e.target.value)} required placeholder="e.g. Thoughts on the Harry Potter finale?" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
+                                        <input type="text" value={threadTitle} onChange={(e) => setThreadTitle(e.target.value)} required placeholder="e.g. Thoughts on the Harry Potter finale?" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-slate-100 text-sm" />
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Topic Body</label>
-                                        <textarea value={threadContent} onChange={(e) => setThreadContent(e.target.value)} required rows="4" placeholder="Type topic details here..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm"></textarea>
+                                        <textarea value={threadContent} onChange={(e) => setThreadContent(e.target.value)} required rows="4" placeholder="Type topic details here..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-slate-100 text-sm"></textarea>
                                     </div>
-                                    <button type="submit" class="w-full bg-brand-500 hover:bg-brand-400 text-slate-950 font-bold py-3 rounded-xl transition duration-300">
+                                    <button type="submit" class="w-full bg-brand-500 hover:bg-brand-400 text-[#0f172a] font-bold py-3 rounded-xl transition duration-300">
                                         Post Discussion Thread
                                     </button>
                                 </form>
@@ -1301,13 +1385,13 @@ export function renderBookHaven(): string {
 
                     {/* CORE USER AUTHENTICATION / SIGNIN MODAL */}
                     {showAuthModal && (
-                        <div class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 overflow-y-auto">
+                        <div class="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 overflow-y-auto">
                             <div class="glass-card rounded-3xl p-8 w-full max-w-md border border-slate-800 shadow-2xl relative">
-                                <button onClick={() => setShowAuthModal(false)} class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors duration-150 p-2 rounded-lg hover:bg-slate-800/50" aria-label="Close modal">
+                                <button onClick={() => setShowAuthModal(false)} class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 transition-colors duration-150 p-2 rounded-lg hover:bg-slate-800/50" aria-label="Close modal">
                                     <i class="fas fa-times text-lg"></i>
                                 </button>
                                 <div class="text-center mb-8">
-                                    <h2 class="text-3xl font-extrabold font-outfit text-white">Welcome to BookHaven</h2>
+                                    <h2 class="text-3xl font-extrabold font-outfit text-slate-100">Welcome to BookHaven</h2>
                                     <p class="text-slate-450 text-xs mt-1">Manage reading logs, social reviews and Virtual book clubs</p>
                                 </div>
 
@@ -1322,21 +1406,21 @@ export function renderBookHaven(): string {
                                         {authMode === 'register' && (
                                             <div>
                                                 <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Username</label>
-                                                <input type="text" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} required placeholder="John Doe" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
+                                                <input type="text" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} required placeholder="John Doe" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-slate-100 text-sm" />
                                             </div>
                                         )}
 
                                         {/* Identifier: Mobile or Email */}
                                         <div>
                                             <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Email or Mobile Number</label>
-                                            <input type="text" value={authIdentifier} onChange={(e) => setAuthIdentifier(e.target.value)} required placeholder="you@example.com or +1234567890" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm" />
+                                            <input type="text" value={authIdentifier} onChange={(e) => setAuthIdentifier(e.target.value)} required placeholder="you@example.com or +1234567890" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-slate-100 text-sm" />
                                         </div>
 
                                         {/* Age Classification (only on registration) */}
                                         {authMode === 'register' && (
                                             <div>
                                                 <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Age Classification</label>
-                                                <select value={regAgeGroup} onChange={(e) => setRegAgeGroup(e.target.value)} class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-white text-sm h-11">
+                                                <select value={regAgeGroup} onChange={(e) => setRegAgeGroup(e.target.value)} class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 focus:outline-none focus:border-brand-500 text-slate-100 text-sm h-11">
                                                     <option value="ya">Young Adult</option>
                                                     <option value="adult">Adult (18+)</option>
                                                 </select>
@@ -1344,7 +1428,7 @@ export function renderBookHaven(): string {
                                         )}
 
                                         {/* Action Button */}
-                                        <button type="submit" disabled={otpLoading} class="w-full bg-brand-500 hover:bg-brand-400 disabled:bg-brand-500/40 text-slate-950 font-bold py-3 rounded-xl text-sm transition duration-300 mt-2 shadow-lg shadow-brand-500/10 flex items-center justify-center gap-2">
+                                        <button type="submit" disabled={otpLoading} class="w-full bg-brand-500 hover:bg-brand-400 disabled:bg-brand-500/40 text-[#0f172a] font-bold py-3 rounded-xl text-sm transition duration-300 mt-2 shadow-lg shadow-brand-500/10 flex items-center justify-center gap-2">
                                             {otpLoading ? (
                                                 <i class="fas fa-circle-notch fa-spin"></i>
                                             ) : authMode === 'login' ? (
