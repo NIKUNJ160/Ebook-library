@@ -212,6 +212,7 @@ export function renderBookHaven(): string {
             const [clubs, setClubs] = useState([]);
             const [forumThreads, setForumThreads] = useState([]);
             const [marketplace, setMarketplace] = useState([]);
+            const [isLoading, setIsLoading] = useState(true);
             
             // For detail views
             const [activeThread, setActiveThread] = useState(null);
@@ -303,6 +304,7 @@ export function renderBookHaven(): string {
             // Fetch app data
             const loadData = async () => {
                 if (!auth) return;
+                setIsLoading(true);
                 try {
                     // Load in parallel
                     const [libData, catData, sugData, feedData, challengeData, clubData, forumData] = await Promise.all([
@@ -328,6 +330,8 @@ export function renderBookHaven(): string {
                     localStorage.setItem(\`offline_/api/books/catalogue?category=\${ageGroup}\`, JSON.stringify(catData));
                 } catch (err) {
                     console.error('Failed to load data', err);
+                } finally {
+                    setIsLoading(false);
                 }
             };
 
@@ -816,7 +820,19 @@ export function renderBookHaven(): string {
                                         {/* Progress Widget */}
                                         <div class="glass-card rounded-2xl p-6">
                                             <h3 class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-4">Current Progress</h3>
-                                            {library.filter(b => b.status === 'reading').length > 0 ? (
+                                            {isLoading ? (
+                                                <div class="space-y-4 animate-pulse">
+                                                    {[1, 2].map(i => (
+                                                        <div key={i} class="bg-slate-900/60 p-4 rounded-xl border border-slate-850">
+                                                            <div class="flex justify-between items-start mb-2">
+                                                                <div class="h-4 bg-slate-800 rounded w-2/3"></div>
+                                                                <div class="h-4 bg-slate-800 rounded w-8"></div>
+                                                            </div>
+                                                            <div class="w-full bg-slate-800 rounded-full h-2 mt-3"></div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : library.filter(b => b.status === 'reading').length > 0 ? (
                                                 <div class="space-y-4">
                                                     {library.filter(b => b.status === 'reading').slice(0, 2).map(book => (
                                                         <div key={book.id} class="bg-slate-900/60 p-4 rounded-xl border border-slate-850">
@@ -873,22 +889,35 @@ export function renderBookHaven(): string {
                                         </div>
                                         
                                         <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
-                                            {suggestions.map(book => (
-                                                <div key={book.id} class="glass-card rounded-xl p-4 flex flex-col justify-between hover:scale-105 transition duration-300">
-                                                    <div class="aspect-[3/4] rounded-lg overflow-hidden bg-slate-800 mb-3 border border-slate-700 relative">
-                                                        <img src={book.cover_url} class="w-full h-full object-cover" />
-                                                        <span class="absolute top-2 right-2 bg-black/80 text-[10px] font-bold px-2 py-0.5 rounded-full text-brand-400">{book.genre}</span>
-                                                    </div>
-                                                    <div>
-                                                        <h4 class="font-bold text-sm text-white line-clamp-1">{book.title}</h4>
-                                                        <p class="text-xs text-slate-400 mb-3">{book.author}</p>
-                                                        <button onClick={() => addToLibrary(book.id)} class="w-full bg-slate-800 hover:bg-slate-700 text-white py-1.5 rounded-lg text-xs font-semibold transition">
-                                                            + Add Library
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
+                                             {isLoading ? (
+                                                 [1, 2, 3, 4, 5, 6].map(i => (
+                                                     <div key={i} class="glass-card rounded-xl p-4 flex flex-col justify-between animate-pulse">
+                                                         <div class="aspect-[3/4] rounded-lg bg-slate-800/50 mb-3 border border-slate-700/50"></div>
+                                                         <div class="space-y-2">
+                                                             <div class="h-4 bg-slate-800 rounded w-3/4"></div>
+                                                             <div class="h-3 bg-slate-800 rounded w-1/2"></div>
+                                                             <div class="h-7 bg-slate-800 rounded w-full mt-3"></div>
+                                                         </div>
+                                                     </div>
+                                                 ))
+                                             ) : (
+                                                 suggestions.map(book => (
+                                                     <div key={book.id} class="glass-card rounded-xl p-4 flex flex-col justify-between hover:scale-105 transition duration-300">
+                                                         <div class="aspect-[3/4] rounded-lg overflow-hidden bg-slate-800 mb-3 border border-slate-700 relative">
+                                                             <img src={book.cover_url} class="w-full h-full object-cover" />
+                                                             <span class="absolute top-2 right-2 bg-black/80 text-[10px] font-bold px-2 py-0.5 rounded-full text-brand-400">{book.genre}</span>
+                                                         </div>
+                                                         <div>
+                                                             <h4 class="font-bold text-sm text-white line-clamp-1">{book.title}</h4>
+                                                             <p class="text-xs text-slate-400 mb-3">{book.author}</p>
+                                                             <button onClick={() => addToLibrary(book.id)} class="w-full bg-slate-800 hover:bg-slate-700 text-white py-1.5 rounded-lg text-xs font-semibold transition">
+                                                                 + Add Library
+                                                             </button>
+                                                         </div>
+                                                     </div>
+                                                 ))
+                                             )}
+                                         </div>
                                     </div>
                                 </div>
                             )}
@@ -903,14 +932,28 @@ export function renderBookHaven(): string {
                                         </div>
                                         <div class="flex gap-2 w-full sm:w-auto">
                                             {['all', 'reading', 'want_to_read', 'finished'].map(status => (
-                                                <button key={status} onClick={() => setFilterStatus(status)} class={\`px-4 py-2 rounded-xl text-xs font-semibold capitalize transition duration-300 \${filterStatus === status ? 'bg-brand-500 text-black' : 'bg-slate-800 text-slate-300 hover:bg-slate-750'}\`}>
+                                                 <button key={status} onClick={() => setFilterStatus(status)} class={\`px-4 py-2 rounded-xl text-xs font-semibold capitalize transition duration-300 \${filterStatus === status ? 'bg-brand-500 text-black' : 'bg-slate-800 text-slate-300 hover:bg-slate-750'}\`}>
                                                     {status.replace(/_/g, ' ')}
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
 
-                                    {library.length > 0 ? (
+                                    {isLoading ? (
+                                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                            {[1, 2, 3, 4].map(i => (
+                                                <div key={i} class="glass-card rounded-2xl p-5 flex flex-col justify-between border border-slate-800 animate-pulse">
+                                                    <div>
+                                                        <div class="aspect-[3/4] rounded-xl bg-slate-800/50 mb-4 border border-slate-700/50"></div>
+                                                        <div class="h-5 bg-slate-800 rounded w-3/4 mb-2"></div>
+                                                        <div class="h-3.5 bg-slate-850 rounded w-1/2 mb-4"></div>
+                                                        <div class="h-12 bg-slate-800/55 rounded-xl mt-4"></div>
+                                                    </div>
+                                                    <div class="h-8 bg-slate-800/40 rounded-xl mt-4 pt-4"></div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : library.length > 0 ? (
                                         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                                             {library
                                                 .filter(b => {
@@ -997,22 +1040,35 @@ export function renderBookHaven(): string {
                                     <div class="space-y-4">
                                         <h3 class="text-xl font-bold font-outfit text-white">General Directory ({ageGroup.toUpperCase()})</h3>
                                         <div class="grid grid-cols-2 md:grid-cols-6 gap-6">
-                                            {catalogue
-                                                .filter(b => b.title.toLowerCase().includes(searchQuery.toLowerCase()) || b.author.toLowerCase().includes(searchQuery.toLowerCase()))
-                                                .map(book => (
-                                                    <div key={book.id} class="glass-card rounded-2xl p-4 flex flex-col justify-between border border-slate-800 hover:scale-103 transition duration-300">
+                                            {isLoading ? (
+                                                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(i => (
+                                                    <div key={i} class="glass-card rounded-2xl p-4 flex flex-col justify-between border border-slate-800 animate-pulse">
                                                         <div>
-                                                            <div class="aspect-[3/4] rounded-xl overflow-hidden bg-slate-800 mb-3 border border-slate-750">
-                                                                <img src={book.cover_url} class="w-full h-full object-cover" />
-                                                            </div>
-                                                            <h4 class="font-bold text-sm text-white line-clamp-1">{book.title}</h4>
-                                                            <p class="text-xs text-slate-400 mt-0.5 mb-3">{book.author}</p>
+                                                            <div class="aspect-[3/4] rounded-xl bg-slate-800/50 mb-3 border border-slate-750/50"></div>
+                                                            <div class="h-4 bg-slate-800 rounded w-3/4 mb-1"></div>
+                                                            <div class="h-3 bg-slate-850 rounded w-1/2 mb-3"></div>
                                                         </div>
-                                                        <button onClick={() => addToLibrary(book.id)} class="w-full bg-brand-500/20 hover:bg-brand-500 text-brand-300 hover:text-black py-2 rounded-xl text-xs font-bold transition duration-300">
-                                                            Add to Library
-                                                        </button>
+                                                        <div class="h-8 bg-slate-800/60 rounded-xl"></div>
                                                     </div>
-                                                ))}
+                                                ))
+                                            ) : (
+                                                catalogue
+                                                    .filter(b => b.title.toLowerCase().includes(searchQuery.toLowerCase()) || b.author.toLowerCase().includes(searchQuery.toLowerCase()))
+                                                    .map(book => (
+                                                        <div key={book.id} class="glass-card rounded-2xl p-4 flex flex-col justify-between border border-slate-800 hover:scale-103 transition duration-300">
+                                                            <div>
+                                                                <div class="aspect-[3/4] rounded-xl overflow-hidden bg-slate-800 mb-3 border border-slate-750">
+                                                                    <img src={book.cover_url} class="w-full h-full object-cover" />
+                                                                </div>
+                                                                <h4 class="font-bold text-sm text-white line-clamp-1">{book.title}</h4>
+                                                                <p class="text-xs text-slate-400 mt-0.5 mb-3">{book.author}</p>
+                                                            </div>
+                                                            <button onClick={() => addToLibrary(book.id)} class="w-full bg-brand-500/20 hover:bg-brand-500 text-brand-300 hover:text-black py-2 rounded-xl text-xs font-bold transition duration-300">
+                                                                Add to Library
+                                                            </button>
+                                                        </div>
+                                                    ))
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -1195,7 +1251,20 @@ export function renderBookHaven(): string {
                                         </button>
                                     </div>
 
-                                    {clubs.length > 0 ? (
+                                    {isLoading ? (
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            {[1, 2, 3].map(i => (
+                                                <div key={i} class="glass-card rounded-2xl p-6 border border-slate-800 animate-pulse flex flex-col justify-between">
+                                                    <div class="space-y-3">
+                                                        <div class="h-5 w-24 bg-slate-800 rounded-full"></div>
+                                                        <div class="h-6 w-3/4 bg-slate-800 rounded"></div>
+                                                        <div class="h-16 w-full bg-slate-850 rounded"></div>
+                                                    </div>
+                                                    <div class="h-10 bg-slate-800/60 rounded-xl mt-6"></div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : clubs.length > 0 ? (
                                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             {clubs.map(club => (
                                                 <div key={club.id} class="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col justify-between relative overflow-hidden">
@@ -1238,7 +1307,19 @@ export function renderBookHaven(): string {
                                                 </button>
                                             </div>
 
-                                            {forumThreads.length > 0 ? (
+                                            {isLoading ? (
+                                                <div class="space-y-4">
+                                                    {[1, 2, 3].map(i => (
+                                                        <div key={i} class="glass-card rounded-2xl p-5 border border-slate-800 animate-pulse flex justify-between items-center">
+                                                            <div class="space-y-2 flex-grow">
+                                                                <div class="h-5 w-1/3 bg-slate-800 rounded"></div>
+                                                                <div class="h-3 w-1/4 bg-slate-850 rounded"></div>
+                                                            </div>
+                                                            <div class="h-8 w-20 bg-slate-800 rounded-xl"></div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : forumThreads.length > 0 ? (
                                                 <div class="space-y-4">
                                                     {forumThreads.map(thread => (
                                                         <div key={thread.id} onClick={() => viewThread(thread.id)} class="glass-card rounded-2xl p-5 border border-slate-800 hover:border-slate-700 cursor-pointer flex justify-between items-center transition duration-300">
