@@ -8,7 +8,7 @@ export function renderBookHaven(): string {
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -30,17 +30,17 @@ export function renderBookHaven(): string {
                 extend: {
                     colors: {
                         brand: {
-                            50: '#fffbeb',
-                            100: '#fef3c7',
-                            200: '#fde68a',
-                            300: '#fcd34d',
-                            400: '#fbbf24',
-                            500: '#f59e0b',
-                            600: '#d97706',
-                            700: '#b45309',
-                            800: '#92400e',
-                            900: '#78350f',
-                            950: '#451a03',
+                            50: '#fff5f0',
+                            100: '#ffe3d5',
+                            200: '#ffc4aa',
+                            300: '#ff9c74',
+                            400: '#ff6b37',
+                            500: '#ff530d',
+                            600: '#f03c00',
+                            700: '#cc2d00',
+                            800: '#a32503',
+                            900: '#822007',
+                            950: '#470d01',
                         },
                         slate: {
                             50: 'var(--slate-50)',
@@ -58,8 +58,9 @@ export function renderBookHaven(): string {
                         }
                     },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        outfit: ['Outfit', 'sans-serif']
+                        sans: ['Open Sans', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                        roboto: ['Roboto', 'sans-serif']
                     }
                 }
             }
@@ -67,45 +68,45 @@ export function renderBookHaven(): string {
     </script>
     <style>
         :root {
-            --slate-50: #0f172a;
-            --slate-100: #1e293b;
-            --slate-200: #334155;
-            --slate-300: #475569;
-            --slate-400: #64748b;
-            --slate-500: #64748b;
-            --slate-600: #94a3b8;
+            --slate-50: #000000;
+            --slate-100: #222222;
+            --slate-200: #333333;
+            --slate-300: #555555;
+            --slate-400: #666666;
+            --slate-500: #888888;
+            --slate-600: #777777;
             --slate-700: #cbd5e1;
-            --slate-800: #e2e8f0;
-            --slate-850: #edf2f7;
-            --slate-900: #f1f5f9;
-            --slate-950: #f8fafc;
+            --slate-800: #e8e8e8;
+            --slate-850: #f4f4f4;
+            --slate-900: #ffffff;
+            --slate-950: #e9eaed;
 
-            --glass-card-bg: rgba(255, 255, 255, 0.7);
-            --glass-card-border: rgba(15, 23, 42, 0.08);
-            --glass-nav-bg: rgba(248, 250, 252, 0.85);
+            --glass-card-bg: rgba(255, 255, 255, 0.95);
+            --glass-card-border: rgba(0, 0, 0, 0.08);
+            --glass-nav-bg: rgba(255, 255, 255, 0.95);
         }
         .dark {
-            --slate-50: #f8fafc;
-            --slate-100: #f1f5f9;
-            --slate-200: #e2e8f0;
+            --slate-50: #ffffff;
+            --slate-100: #f8fafc;
+            --slate-200: #d0d0d0;
             --slate-300: #cbd5e1;
             --slate-400: #94a3b8;
             --slate-500: #64748b;
             --slate-600: #475569;
             --slate-700: #334155;
-            --slate-800: #1e293b;
-            --slate-850: #172033;
-            --slate-900: #0f172a;
-            --slate-950: #020617;
+            --slate-800: #2b2b2b;
+            --slate-850: #2c2c2c;
+            --slate-900: #3e3e3e;
+            --slate-950: #5a5454;
 
-            --glass-card-bg: rgba(30, 41, 59, 0.7);
+            --glass-card-bg: rgba(62, 62, 62, 0.95);
             --glass-card-border: rgba(255, 255, 255, 0.08);
-            --glass-nav-bg: rgba(15, 23, 42, 0.85);
+            --glass-nav-bg: rgba(62, 62, 62, 0.95);
         }
         body {
-            background-color: var(--slate-900);
-            color: var(--slate-100);
-            font-family: 'Inter', sans-serif;
+            background-color: var(--slate-950);
+            color: var(--slate-200);
+            font-family: 'Open Sans', sans-serif;
             overflow-x: hidden;
         }
         /* Custom scrollbar */
@@ -114,7 +115,7 @@ export function renderBookHaven(): string {
             height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: var(--slate-900);
+            background: var(--slate-950);
         }
         ::-webkit-scrollbar-thumb {
             background: var(--slate-700);
@@ -148,7 +149,7 @@ export function renderBookHaven(): string {
             width: 10px;
             height: 10px;
             background-color: #22c55e;
-            border: 2px solid var(--slate-800);
+            border: 2px solid var(--slate-900);
             border-radius: 50%;
         }
     </style>
@@ -227,6 +228,8 @@ export function renderBookHaven(): string {
             const [mangaTag, setMangaTag] = useState('all');
             const [mangaAuthor, setMangaAuthor] = useState('all');
             const [mangaSearch, setMangaSearch] = useState('');
+            const [currentSlide, setCurrentSlide] = useState(0);
+            const [selectedBook, setSelectedBook] = useState(null);
 
             
             // Modals
@@ -350,6 +353,15 @@ export function renderBookHaven(): string {
                     })
                     .catch(console.error);
             }, []);
+
+            // Auto advance carousel slider every 5 seconds
+            useEffect(() => {
+                if (suggestions.length === 0) return;
+                const timer = setInterval(() => {
+                    setCurrentSlide(prev => (prev + 1) % Math.min(suggestions.length, 5));
+                }, 5000);
+                return () => clearInterval(timer);
+            }, [suggestions]);
 
             const handleLogout = () => {
                 localStorage.removeItem('bh_token');
@@ -693,49 +705,201 @@ export function renderBookHaven(): string {
                 );
             }
 
-            return (
-                <div class="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-                    {/* Header */}
-                    <header class="glass-nav sticky top-0 z-40 px-6 py-4 flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <div class="bg-brand-500 text-black w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/20">
-                                <i class="fas fa-book-open text-lg"></i>
+            function BookDetailsView({ book, onClose, onAddToLibrary, library, updateProgress }) {
+                const inLib = library.find(item => item.id === book.id);
+                // Custom chapters list
+                const chaptersCount = 10;
+                const dummyChapters = Array.from({ length: chaptersCount }, (_, i) => ({
+                    num: chaptersCount - i,
+                    title: "Chapter " + (chaptersCount - i) + ": " + book.title + " Chronicle",
+                    date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toLocaleDateString(),
+                    views: 24500 - i * 1500
+                }));
+
+                const readChapter = (chapterNum) => {
+                    const percent = Math.round((chapterNum / chaptersCount) * 100);
+                    updateProgress(book.id, percent, 'reading');
+                    alert("Now reading Chapter " + chapterNum + "! Your library progress is updated to " + percent + "%.");
+                };
+
+                return (
+                    <div class="space-y-6 animate-fadeIn bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                        <button onClick={onClose} class="text-slate-400 hover:text-white font-bold flex items-center gap-2 transition duration-300">
+                            <i class="fas fa-arrow-left text-xs"></i> Back to Catalogue
+                        </button>
+
+                        <div class="flex flex-col md:flex-row gap-6">
+                            {/* Left Cover Image */}
+                            <div class="w-full md:w-44 flex-shrink-0">
+                                <div class="aspect-[112/175] rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-md">
+                                    <img src={book.cover_url} class="w-full h-full object-cover" />
+                                </div>
+                                {!inLib && (
+                                    <button onClick={() => onAddToLibrary(book.id)} class="w-full mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold py-2 rounded-xl text-xs transition">
+                                        + Add to Library
+                                    </button>
+                                )}
                             </div>
-                            <span class="text-2xl font-black tracking-tight font-outfit bg-gradient-to-r from-white via-slate-200 to-brand-400 bg-clip-text text-transparent">BookHaven</span>
+
+                            {/* Right Info Details Sheet */}
+                            <div class="flex-grow space-y-4">
+                                <span class="bg-brand-500/10 text-brand-400 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase border border-brand-500/20 tracking-wider font-roboto">Book Details</span>
+                                <h2 class="text-2xl font-black text-white font-outfit mt-1">{book.title}</h2>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3.5 text-sm pt-2 border-t border-slate-800/80">
+                                    <div class="flex gap-4">
+                                        <span class="text-slate-400 font-semibold w-24">Alternative:</span>
+                                        <span class="text-slate-200">{book.title} (Official)</span>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <span class="text-slate-400 font-semibold w-24">Author:</span>
+                                        <span class="text-brand-400 font-semibold">{book.author}</span>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <span class="text-slate-400 font-semibold w-24">Status:</span>
+                                        <span class="text-slate-200">Ongoing</span>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <span class="text-slate-400 font-semibold w-24">Total Views:</span>
+                                        <span class="text-slate-200">1.2M views</span>
+                                    </div>
+                                    <div class="flex gap-4 md:col-span-2">
+                                        <span class="text-slate-400 font-semibold w-24">Genres:</span>
+                                        <div class="flex flex-wrap gap-2">
+                                            {book.genre.split(',').map((g, idx) => (
+                                                <span key={idx} class="text-xs bg-[#2b2b2b] text-white px-2.5 py-1 rounded-md font-medium">{g.trim()}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Bookmark reading status tracker */}
+                                {inLib && (
+                                    <div class="bg-slate-955 border border-slate-800 p-4 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4 mt-4">
+                                        <div class="w-full md:w-2/3 space-y-1.5">
+                                            <div class="flex justify-between items-center text-xs">
+                                                <span class="text-slate-400 font-semibold">Your Library Progress:</span>
+                                                <span class="text-brand-400 font-bold">{inLib.progress_percent}% ({Math.round(inLib.progress_percent / 10)} / 10 Chapters)</span>
+                                            </div>
+                                            <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                                <div class="bg-brand-500 h-1.5 rounded-full transition-all duration-300" style={{ width: inLib.progress_percent + "%" }}></div>
+                                            </div>
+                                        </div>
+                                        <div class="flex gap-2 w-full md:w-auto">
+                                            <button onClick={() => updateProgress(book.id, 100, 'finished')} class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition">Mark Read</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Middle Controls (YA vs Adult Toggle) */}
+                        {/* Natomanga Notice Banner */}
+                        <div class="bg-slate-955 border border-brand-500/30 p-4 rounded-2xl flex items-start gap-3.5">
+                            <span class="text-brand-500 text-lg mt-0.5"><i class="fas fa-exclamation-circle"></i></span>
+                            <div class="space-y-1">
+                                <h4 class="text-xs font-bold text-slate-100 uppercase tracking-wide">📢 Notice for Readers</h4>
+                                <p class="text-xs text-slate-400 leading-relaxed">
+                                    Please read chapters sequentially. You can click on any chapter listed below to simulate the book reading experience, which will automatically synchronize with your dashboard and personal library!
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Chapters Listing Directory */}
+                        <div class="space-y-4">
+                            <h3 class="font-bold text-base font-outfit uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2"><i class="fas fa-list text-brand-400 mr-2"></i>Chapters Directory</h3>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse text-xs md:text-sm">
+                                    <thead>
+                                        <tr class="border-b border-slate-800 text-brand-400 font-bold">
+                                            <th class="py-2.5 px-4">CHAPTER NAME</th>
+                                            <th class="py-2.5 px-4">DISPATCH DATE</th>
+                                            <th class="py-2.5 px-4 text-right">TOTAL VIEWS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800/50">
+                                        {dummyChapters.map((ch, idx) => (
+                                            <tr key={idx} class="hover:bg-slate-955/60 transition group">
+                                                <td class="py-3 px-4">
+                                                    <button onClick={() => readChapter(ch.num)} class="text-left font-semibold text-slate-100 hover:text-brand-400 group-hover:underline transition">
+                                                        {ch.title}
+                                                    </button>
+                                                </td>
+                                                <td class="py-3 px-4 text-slate-400">{ch.date}</td>
+                                                <td class="py-3 px-4 text-right text-slate-400 font-medium">{ch.views.toLocaleString()}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div class="min-h-screen flex flex-col bg-slate-950 text-slate-100">                    {/* Header */}
+                    <header class="bg-slate-900 border-b border-slate-800/80 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div class="flex items-center justify-between w-full md:w-auto gap-4">
+                            {/* Logo panel with white background in light mode, dark in dark mode */}
+                            <div class="bg-slate-950 px-5 py-2.5 rounded-lg flex items-center gap-3 border border-slate-800">
+                                <div class="bg-brand-500 text-white w-8 h-8 rounded-lg flex items-center justify-center shadow-lg shadow-brand-500/20">
+                                    <i class="fas fa-book-open text-sm"></i>
+                                </div>
+                                <span class="text-xl font-bold tracking-tight font-roboto text-slate-100">BookHaven</span>
+                            </div>
+
+                            {/* Theme and notifications for Mobile view */}
+                            <div class="flex md:hidden items-center gap-2">
+                                <button onClick={toggleTheme} class="p-2 text-slate-400 hover:text-brand-500 rounded-xl transition duration-300" title="Toggle Theme">
+                                    <i class={isDarkMode ? "fas fa-sun text-amber-400" : "fas fa-moon text-slate-500"}></i>
+                                </button>
+                                {auth && (
+                                    <button onClick={handleLogout} class="text-slate-400 hover:text-red-400 p-2 transition duration-300">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Search Bar matching Natomanga style */}
                         {auth && (
-                            <div class="flex bg-slate-900 border border-slate-700/50 rounded-xl p-1">
-                                <button onClick={() => setAgeGroup('ya')} class={\`px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition duration-350 \${ageGroup === 'ya' ? 'bg-brand-500 text-black' : 'text-slate-400 hover:text-white'}\`}>
-                                    Young Adult
-                                </button>
-                                <button onClick={() => setAgeGroup('adult')} class={\`px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition duration-350 \${ageGroup === 'adult' ? 'bg-brand-500 text-black' : 'text-slate-400 hover:text-white'}\`}>
-                                    Adult (18+)
-                                </button>
+                            <div class="w-full md:max-w-md relative">
+                                <input 
+                                    type="text" 
+                                    placeholder="Search stories, authors, tags..." 
+                                    value={activeTab === 'manga' ? mangaSearch : searchQuery}
+                                    onChange={(e) => {
+                                        if (activeTab === 'manga') {
+                                            setMangaSearch(e.target.value);
+                                        } else {
+                                            setSearchQuery(e.target.value);
+                                        }
+                                    }}
+                                    class="w-full bg-slate-955 text-slate-100 pl-10 pr-4 py-2 border-b-2 border-brand-500 focus:outline-none text-sm transition"
+                                />
+                                <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
                             </div>
                         )}
 
                         {/* Right side controls */}
-                        <div class="flex items-center gap-4">
-                            {/* Theme Toggler */}
-                            <button onClick={toggleTheme} class="p-2 text-slate-400 hover:text-brand-500 rounded-xl transition duration-300 flex items-center justify-center" title="Toggle Light/Dark Mode">
+                        <div class="hidden md:flex items-center gap-4">
+                            <button onClick={toggleTheme} class="p-2 text-slate-400 hover:text-brand-500 rounded-xl transition duration-300 flex items-center justify-center" title="Toggle Theme">
                                 <i class={isDarkMode ? "fas fa-sun text-lg text-amber-400" : "fas fa-moon text-lg text-slate-500"}></i>
                             </button>
 
                             {auth ? (
                                 <div class="flex items-center gap-4">
-                                    
-                                    {/* Notifications Button */}
+                                    {/* Notifications */}
                                     <div class="relative">
-                                        <button onClick={() => setShowNotifications(!showNotifications)} class="relative p-2 text-slate-400 hover:text-white transition duration-300">
+                                        <button onClick={() => setShowNotifications(!showNotifications)} class="relative p-2 text-slate-400 hover:text-slate-100 transition duration-300">
                                             <i class="fas fa-bell text-lg"></i>
                                             <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
                                         </button>
                                         
                                         {showNotifications && (
-                                            <div class="absolute right-0 mt-3 w-80 glass-card rounded-2xl shadow-xl p-4 z-50 text-sm">
-                                                <h4 class="font-bold border-b border-slate-800 pb-2 mb-3">Notification Inbox</h4>
+                                            <div class="absolute right-0 mt-3 w-80 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-4 z-50 text-sm">
+                                                <h4 class="font-bold border-b border-slate-800 pb-2 mb-3 text-slate-100">Notification Inbox</h4>
                                                 <div class="space-y-3">
                                                     <div class="flex gap-3">
                                                         <div class="w-2 h-2 mt-1.5 bg-brand-500 rounded-full flex-shrink-0"></div>
@@ -746,178 +910,261 @@ export function renderBookHaven(): string {
                                         )}
                                     </div>
 
-                                    {/* User Profiling */}
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-full bg-slate-800 online-dot relative border border-slate-700">
+                                    {/* Profile Panel styled as a tight Natomanga-style widget */}
+                                    <div class="flex items-center gap-2.5 bg-slate-950 py-1.5 px-3 rounded-lg border border-slate-800">
+                                        <div class="w-8 h-8 rounded-full bg-slate-850 border border-slate-700 relative overflow-hidden">
                                             <img src={auth.user?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=book'} class="w-full h-full rounded-full" />
                                         </div>
-                                        <div class="hidden md:block">
-                                            <div class="text-sm font-semibold text-white">{auth.user?.username}</div>
-                                            <div class="text-xs text-slate-400 capitalize">{auth.user?.provider} reader</div>
+                                        <div class="text-left">
+                                            <div class="text-xs font-semibold text-slate-200">{auth.user?.username}</div>
+                                            <div class="text-[10px] text-slate-400 capitalize">{auth.user?.provider} reader</div>
                                         </div>
-                                        <button onClick={handleLogout} class="text-slate-400 hover:text-red-400 text-sm p-2 transition duration-300" title="Logout">
+                                        <button onClick={handleLogout} class="text-slate-400 hover:text-red-400 text-xs p-1.5 transition duration-300" title="Logout">
                                             <i class="fas fa-sign-out-alt"></i>
                                         </button>
                                     </div>
                                 </div>
                             ) : (
-                                <button onClick={() => setShowAuthModal(true)} class="bg-brand-500 hover:bg-brand-400 text-black font-bold px-5 py-2 rounded-xl transition duration-350 shadow-md shadow-brand-500/10 text-sm">
+                                <button onClick={() => setShowAuthModal(true)} class="bg-brand-500 hover:bg-brand-600 text-white font-bold px-5 py-2 rounded-lg transition duration-350 shadow-md shadow-brand-500/10 text-sm">
                                     Get Started
                                 </button>
                             )}
                         </div>
                     </header>
 
-                    {/* Navigation Tabs */}
+                    {/* Navigation Tabs Bar / Orange menu-primary bar in Light mode, Dark Teal in Dark mode */}
                     {auth && (
-                        <div class="bg-slate-900/35 border-b border-slate-800/80 px-6 py-2 flex flex-wrap gap-2 text-sm justify-center sm:justify-start">
-                            {[
-                                { id: 'home', label: 'Dashboard', icon: 'fa-chart-pie' },
-                                { id: 'library', label: 'My Library', icon: 'fa-books' },
-                                { id: 'discover', label: 'Discover Catalogue', icon: 'fa-search' },
-                                { id: 'manga', label: 'Manga Hub', icon: 'fa-book-open-reader' },
-                                { id: 'social', label: 'Social Feed', icon: 'fa-rss' },
-                                { id: 'clubs', label: 'Book Clubs', icon: 'fa-users' },
-                                { id: 'forum', label: 'Forums', icon: 'fa-comments' }
-                            ].map(tab => (
-                                <button key={tab.id} onClick={() => { setActiveTab(tab.id); setActiveThread(null); }} class={'flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition duration-350 ' + (activeTab === tab.id ? 'bg-slate-800 text-white shadow-sm border border-slate-700/60' : 'text-slate-400 hover:text-slate-200')}>
-                                    <i class={'fas ' + tab.icon + ' text-xs text-brand-400'}></i>
-                                    {tab.label}
+                        <div class="bg-brand-500 dark:bg-[#2a524a] px-6 py-1 border-b border-brand-600 dark:border-teal-800 flex flex-col md:flex-row justify-between items-center gap-2">
+                            <div class="flex flex-wrap gap-1 text-sm w-full md:w-auto justify-center md:justify-start">
+                                {[
+                                    { id: 'home', label: 'HOME', icon: 'fa-chart-pie' },
+                                    { id: 'library', label: 'MY LIBRARY', icon: 'fa-books' },
+                                    { id: 'discover', label: 'DISCOVER DIRECTORY', icon: 'fa-search' },
+                                    { id: 'manga', label: 'MANGA HUB', icon: 'fa-book-open-reader' },
+                                    { id: 'social', label: 'COMMUNITY FEED', icon: 'fa-rss' },
+                                    { id: 'clubs', label: 'BOOK CLUBS', icon: 'fa-users' },
+                                    { id: 'forum', label: 'DISCUSSION FORUM', icon: 'fa-comments' }
+                                ].map(tab => (
+                                    <button 
+                                        key={tab.id} 
+                                        onClick={() => { setActiveTab(tab.id); setActiveThread(null); }} 
+                                        class={'flex items-center gap-2 px-4 py-2.5 font-bold uppercase transition duration-300 text-xs ' + (activeTab === tab.id ? 'bg-[#2b2b2b] text-[#fc0] dark:text-[#fc0]' : 'text-white hover:text-yellow-250')}
+                                    >
+                                        <i class={'fas ' + tab.icon + ' text-[10px]'}></i>
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* YA vs Adult Switcher nested inside Navigation bar */}
+                            <div class="flex bg-black/35 rounded-lg p-0.5 border border-white/10 my-1 md:my-0">
+                                <button onClick={() => setAgeGroup('ya')} class={'px-3 py-1 rounded-md text-[10px] font-bold uppercase transition duration-350 ' + (ageGroup === 'ya' ? 'bg-brand-500 text-white' : 'text-white/60 hover:text-white')}>
+                                    YA
                                 </button>
-                            ))}
+                                <button onClick={() => setAgeGroup('adult')} class={'px-3 py-1 rounded-md text-[10px] font-bold uppercase transition duration-350 ' + (ageGroup === 'adult' ? 'bg-brand-500 text-white' : 'text-white/60 hover:text-white')}>
+                                    Adult (18+)
+                                </button>
+                            </div>
                         </div>
                     )}
 
                     {/* App Core Views */}
                     {auth ? (
                         <main class="flex-grow p-6 md:p-8 max-w-7xl mx-auto w-full">
-                            
-                            {/* HOME/DASHBOARD VIEW */}
+                                                        {/* HOME/DASHBOARD VIEW */}
                             {activeTab === 'home' && (
-                                <div class="space-y-8 animate-fadeIn">
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start animate-fadeIn">
+                                    
+                                    {/* Left Column - Popular carousel & recommendations feed */}
+                                    <div class="lg:col-span-3 space-y-6">
+                                        
+                                        {/* Natomanga Style Popular Slider */}
+                                        <div class="relative bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden aspect-[21/9] md:aspect-[3/1] group shadow-lg">
+                                            <div class="absolute top-0 left-0 bg-brand-500 text-white font-bold text-xs uppercase px-4 py-2 z-10 rounded-br-xl shadow-md font-roboto">
+                                                ★ POPULAR BOOK SUGGESTIONS
+                                            </div>
+                                            
+                                            {isLoading || suggestions.length === 0 ? (
+                                                <div class="w-full h-full bg-slate-950 animate-pulse flex items-center justify-center text-slate-505">
+                                                    <i class="fas fa-spinner fa-spin mr-2"></i> Loading suggestions...
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    {/* Slider track */}
+                                                    <div class="w-full h-full relative overflow-hidden">
+                                                        {suggestions.slice(0, 5).map((book, idx) => (
+                                                            <div 
+                                                                key={book.id} 
+                                                                class={'absolute inset-0 transition-opacity duration-1000 flex ' + (idx === currentSlide ? 'opacity-100 z-0' : 'opacity-0 -z-10 pointer-events-none')}
+                                                            >
+                                                                {/* Blurred background image cover */}
+                                                                <div class="absolute inset-0 scale-105 filter blur-xl opacity-40 bg-cover bg-center" style={{ backgroundImage: "url(" + book.cover_url + ")" }}></div>
+                                                                
+                                                                <div class="relative flex w-full h-full p-6 md:p-8 items-center gap-6 z-10">
+                                                                    <img src={book.cover_url} class="h-4/5 object-cover rounded-lg border border-white/20 shadow-lg" />
+                                                                    <div class="flex-grow flex flex-col justify-center">
+                                                                        <span class="text-[9px] bg-brand-500 text-white font-bold px-2 py-0.5 rounded w-max mb-1.5 uppercase font-roboto">{book.genre}</span>
+                                                                        <h3 class="text-xl md:text-2xl font-black text-white font-outfit line-clamp-1">{book.title}</h3>
+                                                                        <p class="text-xs md:text-sm text-slate-300 mt-1">Author: {book.author}</p>
+                                                                        <p class="text-xs text-slate-400 mt-2 line-clamp-2 max-w-md hidden md:block">Based on your reading analytics and profile preferences, BookHaven recommends this trending book.</p>
+                                                                        <button onClick={() => addToLibrary(book.id)} class="mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs px-4 py-2 rounded-lg w-max transition">
+                                                                            + Add to My Library
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    
+                                                    {/* Slider navigation dots */}
+                                                    <div class="absolute bottom-4 right-4 flex gap-1.5 z-20">
+                                                        {suggestions.slice(0, 5).map((_, idx) => (
+                                                            <button 
+                                                                key={idx} 
+                                                                onClick={() => setCurrentSlide(idx)} 
+                                                                class={'w-2.5 h-2.5 rounded-full transition ' + (idx === currentSlide ? 'bg-brand-500 scale-120' : 'bg-slate-700 hover:bg-slate-500')}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+
+                                        {/* Recommended Directory Grid matching Natomanga style */}
+                                        <div class="space-y-4">
+                                            <h3 class="text-lg font-bold font-outfit uppercase tracking-wider text-slate-100 border-b border-slate-800 pb-2"><i class="fas fa-compass text-brand-500 mr-2"></i>RECOMMENDED FOR YOU</h3>
+                                            
+                                            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                                {isLoading ? (
+                                                     [1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                                                         <div key={i} class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between animate-pulse">
+                                                             <div class="aspect-[112/175] rounded-lg bg-slate-800/50 mb-3 border border-slate-700/50"></div>
+                                                             <div class="space-y-2">
+                                                                 <div class="h-4 bg-slate-800 rounded w-3/4"></div>
+                                                                 <div class="h-3 bg-slate-800 rounded w-1/2"></div>
+                                                                 <div class="h-7 bg-slate-800 rounded w-full mt-3"></div>
+                                                             </div>
+                                                         </div>
+                                                     ))
+                                                ) : (
+                                                     suggestions.map(book => {
+                                                         // Determine custom badging status dynamically based on book rating/genre
+                                                         const isHot = book.id % 2 === 0;
+                                                         const isNew = book.id % 3 === 0;
+                                                         return (
+                                                             <div key={book.id} class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between hover:border-brand-500 transition duration-300 relative group overflow-hidden">
+                                                                 {/* Natomanga status badge overlay */}
+                                                                 <div class="absolute top-2 left-2 z-10 flex flex-col gap-1">
+                                                                     {isHot && <span class="bg-[#c0392b] text-white font-black text-[9px] px-1.5 py-0.5 rounded font-roboto uppercase shadow-sm">HOT</span>}
+                                                                     {isNew && <span class="bg-[#2ecc71] text-white font-black text-[9px] px-1.5 py-0.5 rounded font-roboto uppercase shadow-sm">NEW</span>}
+                                                                     {!isHot && !isNew && <span class="bg-black text-white font-black text-[9px] px-1.5 py-0.5 rounded font-roboto uppercase shadow-sm">SS</span>}
+                                                                 </div>
+
+                                                                 <div class="aspect-[112/175] rounded-lg overflow-hidden bg-slate-955 mb-3 border border-slate-800 relative shadow-inner group-hover:scale-103 transition duration-350">
+                                                                     <img src={book.cover_url} class="w-full h-full object-cover" />
+                                                                     <span class="absolute bottom-2 right-2 bg-black/80 text-[8px] font-bold px-1.5 py-0.5 rounded text-brand-300 font-roboto">{book.genre.toUpperCase()}</span>
+                                                                 </div>
+                                                                 <div>
+                                                                     <h4 class="font-bold text-sm text-slate-100 line-clamp-1 font-outfit" title={book.title}>{book.title}</h4>
+                                                                     <p class="text-[11px] text-slate-400 mb-3">{book.author}</p>
+                                                                     <button onClick={() => addToLibrary(book.id)} class="w-full bg-slate-955 hover:bg-brand-500 hover:text-white border border-slate-805 text-slate-300 py-1.5 rounded-lg text-xs font-semibold transition">
+                                                                         + Add Library
+                                                                     </button>
+                                                                 </div>
+                                                             </div>
+                                                         );
+                                                     })
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right Column - User profile card, history progress, and challenges */}
+                                    <div class="lg:col-span-1 space-y-6">
                                         
                                         {/* Profile Card */}
-                                        <div class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+                                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
                                             <div>
-                                                <h3 class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Active Reader Profile</h3>
-                                                <div class="flex items-center gap-4 mt-3">
-                                                    <div class="w-14 h-14 bg-slate-800 rounded-2xl border border-slate-700 p-1">
-                                                        <img src={auth.user?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=book'} class="w-full h-full rounded-xl" />
+                                                <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2 border-b border-slate-800 pb-1.5"><i class="fas fa-id-card text-brand-500 mr-1.5"></i>Active Reader</h3>
+                                                <div class="flex items-center gap-3.5 mt-3">
+                                                    <div class="w-12 h-12 bg-slate-950 rounded-xl border border-slate-800 p-1 flex-shrink-0">
+                                                        <img src={auth.user?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=book'} class="w-full h-full rounded-lg" />
                                                     </div>
                                                     <div>
-                                                        <h2 class="text-xl font-bold font-outfit text-white">{auth.user?.username}</h2>
-                                                        <p class="text-xs text-slate-400">Library: {library.length} books</p>
+                                                        <h2 class="text-base font-bold font-outfit text-white leading-tight">{auth.user?.username}</h2>
+                                                        <p class="text-[10px] text-slate-400 mt-0.5">Library size: {library.length} books</p>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="mt-6 border-t border-slate-800/80 pt-4 flex justify-between items-center">
-                                                <span class="text-xs text-slate-400">Content preference:</span>
-                                                <span class="bg-brand-500/20 text-brand-300 text-xs font-bold px-3 py-1 rounded-full border border-brand-500/30 uppercase tracking-wide">{ageGroup}</span>
+                                            <div class="mt-4 border-t border-slate-800 pt-3 flex justify-between items-center text-xs">
+                                                <span class="text-slate-400">Content level:</span>
+                                                <span class="bg-brand-500/10 text-brand-400 text-[10px] font-bold px-2 py-0.5 rounded border border-brand-500/20 uppercase tracking-wider">{ageGroup}</span>
                                             </div>
                                         </div>
 
-                                        {/* Progress Widget */}
-                                        <div class="glass-card rounded-2xl p-6">
-                                            <h3 class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-4">Current Progress</h3>
+                                        {/* Currently Reading History sidebar */}
+                                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                                            <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-wider border-b border-slate-800 pb-1.5"><i class="fas fa-history text-brand-500 mr-1.5"></i>READING HISTORY</h3>
+                                            
                                             {isLoading ? (
-                                                <div class="space-y-4 animate-pulse">
+                                                <div class="space-y-3 animate-pulse">
                                                     {[1, 2].map(i => (
-                                                        <div key={i} class="bg-slate-900/60 p-4 rounded-xl border border-slate-850">
-                                                            <div class="flex justify-between items-start mb-2">
-                                                                <div class="h-4 bg-slate-800 rounded w-2/3"></div>
-                                                                <div class="h-4 bg-slate-800 rounded w-8"></div>
-                                                            </div>
-                                                            <div class="w-full bg-slate-800 rounded-full h-2 mt-3"></div>
-                                                        </div>
+                                                        <div key={i} class="h-10 bg-slate-950 rounded border border-slate-800"></div>
                                                     ))}
                                                 </div>
                                             ) : library.filter(b => b.status === 'reading').length > 0 ? (
-                                                <div class="space-y-4">
-                                                    {library.filter(b => b.status === 'reading').slice(0, 2).map(book => (
-                                                        <div key={book.id} class="bg-slate-900/60 p-4 rounded-xl border border-slate-850">
-                                                            <div class="flex justify-between items-start mb-2">
-                                                                <h4 class="font-bold text-sm text-white line-clamp-1">{book.title}</h4>
-                                                                <span class="text-xs text-brand-400 font-bold">{book.progress_percent}%</span>
+                                                <div class="space-y-3">
+                                                    {library.filter(b => b.status === 'reading').slice(0, 3).map(book => (
+                                                        <div key={book.id} class="bg-slate-955 p-3 rounded-lg border border-slate-800">
+                                                            <div class="flex justify-between items-center mb-1.5">
+                                                                <h4 class="font-semibold text-xs text-slate-100 line-clamp-1">{book.title}</h4>
+                                                                <span class="text-[10px] text-[#3498db] font-bold">{book.progress_percent}%</span>
                                                             </div>
-                                                            <div class="w-full bg-slate-800 rounded-full h-2">
-                                                                <div class="bg-brand-500 h-2 rounded-full" style={{ width: \`\${book.progress_percent}%\` }}></div>
+                                                            <div class="w-full bg-slate-800 rounded-full h-1">
+                                                                <div class="bg-[#3498db] h-1 rounded-full" style={{ width: book.progress_percent + "%" }}></div>
                                                             </div>
                                                         </div>
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div class="h-32 flex flex-col items-center justify-center text-slate-500 text-sm">
-                                                    <i class="fas fa-book-reader text-2xl mb-2 text-slate-600"></i>
-                                                    <span>No active reads. Start a book from your Library!</span>
+                                                <div class="text-center py-4 text-slate-500 text-xs">
+                                                    <i class="fas fa-book-reader text-lg mb-1.5 block text-slate-650"></i>
+                                                    <span>No active reads</span>
                                                 </div>
                                             )}
                                         </div>
 
                                         {/* Reading Challenges widget */}
-                                        <div class="glass-card rounded-2xl p-6">
-                                            <h3 class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-4">Reading Challenges</h3>
-                                            <div class="space-y-4">
+                                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                                            <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-wider border-b border-slate-800 pb-1.5"><i class="fas fa-trophy text-brand-500 mr-1.5"></i>CHALLENGES</h3>
+                                            <div class="space-y-3">
                                                 {challenges.slice(0, 2).map(ch => (
-                                                    <div key={ch.id} class="bg-slate-900/60 p-4 rounded-xl border border-slate-850">
+                                                    <div key={ch.id} class="bg-slate-955 p-3 rounded-lg border border-slate-805">
                                                         <div class="flex justify-between items-center mb-1">
-                                                            <h4 class="font-semibold text-sm text-white">{ch.title}</h4>
+                                                            <h4 class="font-semibold text-xs text-slate-100">{ch.title}</h4>
                                                             {ch.joined ? (
-                                                                <span class="text-xs text-slate-400 font-bold">{ch.books_read || 0} / {ch.target_count} books</span>
+                                                                <span class="text-[10px] text-slate-400 font-bold">{ch.books_read || 0}/{ch.target_count}</span>
                                                             ) : (
-                                                                <button onClick={() => joinChallenge(ch.id)} class="text-xs bg-brand-500 text-black px-2 py-1 rounded font-bold hover:bg-brand-400">Join</button>
+                                                                <button onClick={() => joinChallenge(ch.id)} class="text-[9px] bg-brand-500 text-white px-2 py-0.5 rounded font-bold hover:bg-brand-600">Join</button>
                                                             )}
                                                         </div>
                                                         {ch.joined && (
-                                                            <div class="w-full bg-slate-800 rounded-full h-1.5 mt-2">
-                                                                <div class="bg-emerald-500 h-1.5 rounded-full" style={{ width: \`\${Math.min(100, ((ch.books_read || 0) / ch.target_count) * 100)}%\` }}></div>
+                                                            <div class="w-full bg-slate-800 rounded-full h-1 mt-1.5">
+                                                                <div class="bg-emerald-500 h-1 rounded-full" style={{ width: Math.min(100, ((ch.books_read || 0) / ch.target_count) * 100) + "%" }}></div>
                                                             </div>
                                                         )}
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {/* Customized Suggestions Section */}
-                                    <div class="space-y-4">
-                                        <div class="flex justify-between items-center">
-                                            <div>
-                                                <h3 class="text-xl font-bold font-outfit text-white">Recommended for You</h3>
-                                                <p class="text-xs text-slate-400">Based on your age group ({ageGroup.toUpperCase()}) and reading metrics</p>
-                                            </div>
+                                        {/* Natomanga Style Important Bookmark Notice */}
+                                        <div class="bg-slate-900 border-l-4 border-brand-500 p-4 rounded-r-xl space-y-1">
+                                            <h4 class="text-xs font-bold text-slate-100 uppercase tracking-wide">📢 Important Notice!</h4>
+                                            <p class="text-[10px] text-slate-400 leading-relaxed">
+                                                Bookmark this site: press <strong class="text-brand-400">Ctrl + D</strong> (Windows) or <strong class="text-brand-400">Cmd + D</strong> (Mac) to preserve local state. Add to home screen for mobile reading.
+                                            </p>
                                         </div>
-                                        
-                                        <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
-                                             {isLoading ? (
-                                                 [1, 2, 3, 4, 5, 6].map(i => (
-                                                     <div key={i} class="glass-card rounded-xl p-4 flex flex-col justify-between animate-pulse">
-                                                         <div class="aspect-[3/4] rounded-lg bg-slate-800/50 mb-3 border border-slate-700/50"></div>
-                                                         <div class="space-y-2">
-                                                             <div class="h-4 bg-slate-800 rounded w-3/4"></div>
-                                                             <div class="h-3 bg-slate-800 rounded w-1/2"></div>
-                                                             <div class="h-7 bg-slate-800 rounded w-full mt-3"></div>
-                                                         </div>
-                                                     </div>
-                                                 ))
-                                             ) : (
-                                                 suggestions.map(book => (
-                                                     <div key={book.id} class="glass-card rounded-xl p-4 flex flex-col justify-between hover:scale-105 transition duration-300">
-                                                         <div class="aspect-[3/4] rounded-lg overflow-hidden bg-slate-800 mb-3 border border-slate-700 relative">
-                                                             <img src={book.cover_url} class="w-full h-full object-cover" />
-                                                             <span class="absolute top-2 right-2 bg-black/80 text-[10px] font-bold px-2 py-0.5 rounded-full text-brand-400">{book.genre}</span>
-                                                         </div>
-                                                         <div>
-                                                             <h4 class="font-bold text-sm text-white line-clamp-1">{book.title}</h4>
-                                                             <p class="text-xs text-slate-400 mb-3">{book.author}</p>
-                                                             <button onClick={() => addToLibrary(book.id)} class="w-full bg-slate-800 hover:bg-slate-700 text-white py-1.5 rounded-lg text-xs font-semibold transition">
-                                                                 + Add Library
-                                                             </button>
-                                                         </div>
-                                                     </div>
-                                                 ))
-                                             )}
-                                         </div>
                                     </div>
                                 </div>
                             )}
@@ -1026,170 +1273,213 @@ export function renderBookHaven(): string {
                             {/* DISCOVER VIEW */}
                             {activeTab === 'discover' && (
                                 <div class="space-y-8 animate-fadeIn">
-                                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-                                        <div class="relative w-full sm:w-72">
-                                            <input type="text" placeholder="Search entire catalog..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 pl-10 w-full focus:outline-none focus:border-brand-500 text-sm" />
-                                            <i class="fas fa-search absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
-                                        </div>
-                                        <button onClick={() => setShowCreateListingModal(true)} class="bg-brand-500 hover:bg-brand-400 text-black px-6 py-2.5 rounded-xl font-bold text-sm transition duration-300 shadow-lg shadow-brand-500/10">
-                                            List Book for Sale/Trade
-                                        </button>
-                                    </div>
+                                    {selectedBook ? (
+                                        <BookDetailsView 
+                                            book={selectedBook} 
+                                            onClose={() => setSelectedBook(null)} 
+                                            onAddToLibrary={addToLibrary} 
+                                            library={library} 
+                                            updateProgress={updateProgress}
+                                        />
+                                    ) : (
+                                        <>
+                                            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+                                                <div class="relative w-full sm:w-72">
+                                                    <input type="text" placeholder="Search entire catalog..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 pl-10 w-full focus:outline-none focus:border-brand-500 text-sm" />
+                                                    <i class="fas fa-search absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+                                                </div>
+                                                <button onClick={() => setShowCreateListingModal(true)} class="bg-brand-500 hover:bg-brand-400 text-black px-6 py-2.5 rounded-xl font-bold text-sm transition duration-300 shadow-lg shadow-brand-500/10">
+                                                    List Book for Sale/Trade
+                                                </button>
+                                            </div>
 
-                                    {/* Main Catalogue */}
-                                    <div class="space-y-4">
-                                        <h3 class="text-xl font-bold font-outfit text-white">General Directory ({ageGroup.toUpperCase()})</h3>
-                                        <div class="grid grid-cols-2 md:grid-cols-6 gap-6">
-                                            {isLoading ? (
-                                                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(i => (
-                                                    <div key={i} class="glass-card rounded-2xl p-4 flex flex-col justify-between border border-slate-800 animate-pulse">
-                                                        <div>
-                                                            <div class="aspect-[3/4] rounded-xl bg-slate-800/50 mb-3 border border-slate-750/50"></div>
-                                                            <div class="h-4 bg-slate-800 rounded w-3/4 mb-1"></div>
-                                                            <div class="h-3 bg-slate-850 rounded w-1/2 mb-3"></div>
-                                                        </div>
-                                                        <div class="h-8 bg-slate-800/60 rounded-xl"></div>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                catalogue
-                                                    .filter(b => b.title.toLowerCase().includes(searchQuery.toLowerCase()) || b.author.toLowerCase().includes(searchQuery.toLowerCase()))
-                                                    .map(book => (
-                                                        <div key={book.id} class="glass-card rounded-2xl p-4 flex flex-col justify-between border border-slate-800 hover:scale-103 transition duration-300">
-                                                            <div>
-                                                                <div class="aspect-[3/4] rounded-xl overflow-hidden bg-slate-800 mb-3 border border-slate-750">
-                                                                    <img src={book.cover_url} class="w-full h-full object-cover" />
+                                            {/* Main Catalogue */}
+                                            <div class="space-y-4">
+                                                <h3 class="text-lg font-bold font-outfit uppercase tracking-wider text-slate-100 border-b border-slate-800 pb-2"><i class="fas fa-compass text-brand-500 mr-2"></i>General Directory ({ageGroup.toUpperCase()})</h3>
+                                                
+                                                <div class="grid grid-cols-2 md:grid-cols-6 gap-6">
+                                                    {isLoading ? (
+                                                        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(i => (
+                                                            <div key={i} class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between animate-pulse">
+                                                                <div>
+                                                                    <div class="aspect-[112/175] rounded-lg bg-slate-800/50 mb-3 border border-slate-700/50"></div>
+                                                                    <div class="h-4 bg-slate-800 rounded w-3/4 mb-1"></div>
+                                                                    <div class="h-3 bg-slate-850 rounded w-1/2 mb-3"></div>
                                                                 </div>
-                                                                <h4 class="font-bold text-sm text-white line-clamp-1">{book.title}</h4>
-                                                                <p class="text-xs text-slate-400 mt-0.5 mb-3">{book.author}</p>
+                                                                <div class="h-8 bg-slate-805 rounded-xl"></div>
                                                             </div>
-                                                            <button onClick={() => addToLibrary(book.id)} class="w-full bg-brand-500/20 hover:bg-brand-500 text-brand-300 hover:text-black py-2 rounded-xl text-xs font-bold transition duration-300">
-                                                                Add to Library
-                                                            </button>
-                                                        </div>
-                                                    ))
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                                                        ))
+                                                    ) : (
+                                                        catalogue
+                                                            .filter(b => b.title.toLowerCase().includes(searchQuery.toLowerCase()) || b.author.toLowerCase().includes(searchQuery.toLowerCase()))
+                                                            .map(book => {
+                                                                const isHot = book.id % 2 === 0;
+                                                                const isNew = book.id % 3 === 0;
+                                                                return (
+                                                                    <div key={book.id} class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between hover:border-brand-500 transition duration-300 relative group overflow-hidden">
+                                                                        {/* Natomanga status badge overlay */}
+                                                                        <div class="absolute top-2 left-2 z-10 flex flex-col gap-1">
+                                                                            {isHot && <span class="bg-[#c0392b] text-white font-black text-[9px] px-1.5 py-0.5 rounded font-roboto uppercase shadow-sm">HOT</span>}
+                                                                            {isNew && <span class="bg-[#2ecc71] text-white font-black text-[9px] px-1.5 py-0.5 rounded font-roboto uppercase shadow-sm">NEW</span>}
+                                                                            {!isHot && !isNew && <span class="bg-black text-white font-black text-[9px] px-1.5 py-0.5 rounded font-roboto uppercase shadow-sm">SS</span>}
+                                                                        </div>
 
-                            {/* MANGA HUB VIEW */}
+                                                                        <div onClick={() => setSelectedBook(book)} class="aspect-[112/175] rounded-lg overflow-hidden bg-slate-955 mb-3 border border-slate-800 relative shadow-inner group-hover:scale-103 transition duration-350 cursor-pointer">
+                                                                            <img src={book.cover_url} class="w-full h-full object-cover" />
+                                                                            <span class="absolute bottom-2 right-2 bg-black/80 text-[8px] font-bold px-1.5 py-0.5 rounded text-brand-300 font-roboto">{book.genre.split(',')[0].toUpperCase()}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <h4 onClick={() => setSelectedBook(book)} class="font-bold text-sm text-slate-100 line-clamp-1 font-outfit cursor-pointer hover:text-brand-500" title={book.title}>{book.title}</h4>
+                                                                            <p class="text-[11px] text-slate-400 mb-3">{book.author}</p>
+                                                                            <button onClick={() => addToLibrary(book.id)} class="w-full bg-slate-955 hover:bg-brand-500 hover:text-white border border-slate-805 text-slate-300 py-1.5 rounded-lg text-xs font-semibold transition">
+                                                                                + Add Library
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                                                  {/* MANGA HUB VIEW */}
                             {activeTab === 'manga' && (
                                 <div class="space-y-8 animate-fadeIn">
-                                    <div class="bg-gradient-to-r from-brand-900/30 via-slate-900/80 to-slate-900/40 p-6 rounded-3xl border border-brand-500/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                                        <div>
-                                            <span class="bg-brand-500 text-black font-bold text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider">Manga & Manhua Hub</span>
-                                            <h2 class="text-3xl font-extrabold font-outfit text-white mt-2">Natomanga Catalog</h2>
-                                            <p class="text-sm text-slate-400 mt-1">Browse, filter, and track reading progress for the top Japanese Manga & Korean Manhwa.</p>
-                                        </div>
-                                        <div class="relative w-full md:w-72">
-                                            <input type="text" placeholder="Search title or author..." value={mangaSearch} onChange={(e) => setMangaSearch(e.target.value)} class="bg-slate-855 border border-slate-700 rounded-xl px-4 py-2.5 pl-10 w-full focus:outline-none focus:border-brand-500 text-white text-sm" />
-                                            <i class="fas fa-search absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
-                                        </div>
-                                    </div>
-
-                                    {/* Categorization & Navigation Rows */}
-                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
-                                        
-                                        {/* Left Side Filters (Tags, Genres, Authors) */}
-                                        <div class="space-y-6">
-                                            
-                                            {/* Filter by Genre */}
-                                            <div class="glass-card rounded-2xl p-5 border border-slate-800 space-y-4">
-                                                <h3 class="font-bold text-sm font-outfit uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2"><i class="fas fa-filter text-brand-400 mr-2"></i>Genres</h3>
-                                                <div class="flex flex-wrap gap-2">
-                                                    {['all', 'Action', 'Fantasy', 'Romance', 'Drama', 'Adventure', 'Comedy', 'Mystery', 'Historical', 'Supernatural'].map(g => (
-                                                        <button key={g} onClick={() => setMangaGenre(g)} class={mangaGenre === g ? 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-brand-500 text-black font-bold' : 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-slate-800 hover:bg-slate-750 text-slate-355'}>
-                                                            {g}
-                                                        </button>
-                                                    ))}
+                                    {selectedBook ? (
+                                        <BookDetailsView 
+                                            book={selectedBook} 
+                                            onClose={() => setSelectedBook(null)} 
+                                            onAddToLibrary={addToLibrary} 
+                                            library={library} 
+                                            updateProgress={updateProgress}
+                                        />
+                                    ) : (
+                                        <>
+                                            <div class="bg-gradient-to-r from-brand-900/30 via-slate-900/80 to-slate-900/40 p-6 rounded-3xl border border-brand-500/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                                <div>
+                                                    <span class="bg-brand-500 text-black font-bold text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider">Manga & Manhua Hub</span>
+                                                    <h2 class="text-3xl font-extrabold font-outfit text-white mt-2">Natomanga Catalog</h2>
+                                                    <p class="text-sm text-slate-400 mt-1">Browse, filter, and track reading progress for the top Japanese Manga & Korean Manhwa.</p>
+                                                </div>
+                                                <div class="relative w-full md:w-72">
+                                                    <input type="text" placeholder="Search title or author..." value={mangaSearch} onChange={(e) => setMangaSearch(e.target.value)} class="bg-slate-855 border border-slate-700 rounded-xl px-4 py-2.5 pl-10 w-full focus:outline-none focus:border-brand-500 text-white text-sm" />
+                                                    <i class="fas fa-search absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
                                                 </div>
                                             </div>
 
-                                            {/* Filter by Tag */}
-                                            <div class="glass-card rounded-2xl p-5 border border-slate-800 space-y-4">
-                                                <h3 class="font-bold text-sm font-outfit uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2"><i class="fas fa-tags text-brand-400 mr-2"></i>Tags</h3>
-                                                <div class="flex flex-wrap gap-2">
-                                                    {['all', 'Reincarnation', 'Isekai', 'Webtoon', 'Slice of Life', 'Crime', 'Thriller'].map(t => (
-                                                        <button key={t} onClick={() => setMangaTag(t)} class={mangaTag === t ? 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-brand-500 text-black font-bold' : 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-slate-800 hover:bg-slate-750 text-slate-355'}>
-                                                            {t}
-                                                        </button>
-                                                    ))}
+                                            {/* Categorization & Navigation Rows */}
+                                            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
+                                                
+                                                {/* Left Side Filters (Tags, Genres, Authors) */}
+                                                <div class="space-y-6">
+                                                    
+                                                    {/* Filter by Genre */}
+                                                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                                                        <h3 class="font-bold text-sm font-outfit uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2"><i class="fas fa-filter text-brand-400 mr-2"></i>Genres</h3>
+                                                        <div class="flex flex-wrap gap-2">
+                                                            {['all', 'Action', 'Fantasy', 'Romance', 'Drama', 'Adventure', 'Comedy', 'Mystery', 'Historical', 'Supernatural'].map(g => (
+                                                                <button key={g} onClick={() => setMangaGenre(g)} class={mangaGenre === g ? 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-brand-500 text-black font-bold' : 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-slate-800 hover:bg-slate-750 text-slate-355'}>
+                                                                    {g}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Filter by Tag */}
+                                                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                                                        <h3 class="font-bold text-sm font-outfit uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2"><i class="fas fa-tags text-brand-400 mr-2"></i>Tags</h3>
+                                                        <div class="flex flex-wrap gap-2">
+                                                            {['all', 'Reincarnation', 'Isekai', 'Webtoon', 'Slice of Life', 'Crime', 'Thriller'].map(t => (
+                                                                <button key={t} onClick={() => setMangaTag(t)} class={mangaTag === t ? 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-brand-500 text-black font-bold' : 'px-3 py-1.5 rounded-lg text-[10px] font-semibold transition bg-slate-800 hover:bg-slate-750 text-slate-355'}>
+                                                                    {t}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Filter by Author */}
+                                                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                                                        <h3 class="font-bold text-sm font-outfit uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2"><i class="fas fa-user-edit text-brand-400 mr-2"></i>Authors</h3>
+                                                        <div class="max-h-48 overflow-y-auto space-y-1 pr-2">
+                                                            <button onClick={() => setMangaAuthor('all')} class={mangaAuthor === 'all' ? 'w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-slate-800'}>
+                                                                All Authors
+                                                            </button>
+                                                            {Array.from(new Set(catalogue.filter(b => b.genre.includes('Manga')).map(b => b.author))).map(authorName => (
+                                                                <button key={authorName} onClick={() => setMangaAuthor(authorName)} class={mangaAuthor === authorName ? 'w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition truncate bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition truncate text-slate-400 hover:text-white hover:bg-slate-800'}>
+                                                                    {authorName}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
 
-                                            {/* Filter by Author */}
-                                            <div class="glass-card rounded-2xl p-5 border border-slate-800 space-y-4">
-                                                <h3 class="font-bold text-sm font-outfit uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2"><i class="fas fa-user-edit text-brand-400 mr-2"></i>Authors</h3>
-                                                <div class="max-h-48 overflow-y-auto space-y-1 pr-2">
-                                                    <button onClick={() => setMangaAuthor('all')} class={mangaAuthor === 'all' ? 'w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white hover:bg-slate-800'}>
-                                                        All Authors
-                                                    </button>
-                                                    {Array.from(new Set(catalogue.filter(b => b.genre.includes('Manga')).map(b => b.author))).map(authorName => (
-                                                        <button key={authorName} onClick={() => setMangaAuthor(authorName)} class={mangaAuthor === authorName ? 'w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition truncate bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition truncate text-slate-400 hover:text-white hover:bg-slate-800'}>
-                                                            {authorName}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
+                                                {/* Right Side Manga Grid */}
+                                                <div class="md:col-span-3 space-y-4">
+                                                    <div class="flex justify-between items-center text-xs text-slate-400">
+                                                        <span>Listing top manga details</span>
+                                                        <button onClick={() => { setMangaGenre('all'); setMangaTag('all'); setMangaAuthor('all'); setMangaSearch(''); }} class="text-brand-400 hover:text-brand-300"><i class="fas fa-undo mr-1"></i>Reset Filters</button>
+                                                    </div>
 
-                                        {/* Right Side Manga Grid */}
-                                        <div class="md:col-span-3 space-y-4">
-                                            <div class="flex justify-between items-center text-xs text-slate-400">
-                                                <span>Listing top manga details</span>
-                                                <button onClick={() => { setMangaGenre('all'); setMangaTag('all'); setMangaAuthor('all'); setMangaSearch(''); }} class="text-brand-400 hover:text-brand-300"><i class="fas fa-undo mr-1"></i>Reset Filters</button>
-                                            </div>
-
-                                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                                                {catalogue
-                                                    .filter(b => b.genre.includes('Manga'))
-                                                    .filter(b => {
-                                                        const matchesSearch = b.title.toLowerCase().includes(mangaSearch.toLowerCase()) || b.author.toLowerCase().includes(mangaSearch.toLowerCase());
-                                                        const matchesGenre = mangaGenre === 'all' || b.genre.includes(mangaGenre);
-                                                        const matchesTag = mangaTag === 'all' || b.genre.includes(mangaTag);
-                                                        const matchesAuthor = mangaAuthor === 'all' || b.author === mangaAuthor;
-                                                        return matchesSearch && matchesGenre && matchesTag && matchesAuthor;
-                                                    })
-                                                    .map(manga => {
-                                                        const inLib = library.find(item => item.id === manga.id);
-                                                        return (
-                                                            <div key={manga.id} class="glass-card rounded-2xl p-4 flex flex-col justify-between border border-slate-800 hover:scale-103 transition duration-300">
-                                                                <div>
-                                                                    <div class="aspect-[3/4] rounded-xl overflow-hidden bg-slate-850 mb-3 border border-slate-750 relative shadow-inner">
-                                                                        <img src={manga.cover_url} class="w-full h-full object-cover" />
-                                                                        <span class="absolute bottom-2 left-2 bg-black/80 backdrop-blur-sm text-[9px] font-bold px-2 py-0.5 rounded text-brand-300">{manga.category.toUpperCase()}</span>
-                                                                    </div>
-                                                                    <h4 class="font-bold text-sm text-white line-clamp-1 font-outfit" title={manga.title}>{manga.title}</h4>
-                                                                    <p class="text-[11px] text-slate-400 mt-0.5 mb-2">{manga.author}</p>
-                                                                    
-                                                                    <div class="flex flex-wrap gap-1 mb-3">
-                                                                        {manga.genre.split(',').slice(0, 3).map((tagStr, tagIdx) => (
-                                                                            <span key={tagIdx} class="text-[9px] bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded text-slate-400 font-medium">{tagStr.replace('Manga', '').trim()}</span>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-
-                                                                {inLib ? (
-                                                                    <div class="space-y-2 mt-2">
-                                                                        <div class="flex justify-between items-center text-[10px]">
-                                                                            <span class="text-slate-400">Chapters read:</span>
-                                                                            <span class="text-brand-400 font-bold">{inLib.progress_percent}%</span>
+                                                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                                        {catalogue
+                                                            .filter(b => b.genre.includes('Manga'))
+                                                            .filter(b => {
+                                                                const matchesSearch = b.title.toLowerCase().includes(mangaSearch.toLowerCase()) || b.author.toLowerCase().includes(mangaSearch.toLowerCase());
+                                                                const matchesGenre = mangaGenre === 'all' || b.genre.includes(mangaGenre);
+                                                                const matchesTag = mangaTag === 'all' || b.genre.includes(mangaTag);
+                                                                const matchesAuthor = mangaAuthor === 'all' || b.author === mangaAuthor;
+                                                                return matchesSearch && matchesGenre && matchesTag && matchesAuthor;
+                                                            })
+                                                            .map(manga => {
+                                                                const inLib = library.find(item => item.id === manga.id);
+                                                                const isHot = manga.id % 2 === 0;
+                                                                const isNew = manga.id % 3 === 0;
+                                                                return (
+                                                                    <div key={manga.id} class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between hover:border-brand-500 transition duration-300 relative group overflow-hidden">
+                                                                        {/* Natomanga status badge overlay */}
+                                                                        <div class="absolute top-2 left-2 z-10 flex flex-col gap-1">
+                                                                            {isHot && <span class="bg-[#c0392b] text-white font-black text-[9px] px-1.5 py-0.5 rounded font-roboto uppercase shadow-sm">HOT</span>}
+                                                                            {isNew && <span class="bg-[#2ecc71] text-white font-black text-[9px] px-1.5 py-0.5 rounded font-roboto uppercase shadow-sm">NEW</span>}
+                                                                            {!isHot && !isNew && <span class="bg-black text-white font-black text-[9px] px-1.5 py-0.5 rounded font-roboto uppercase shadow-sm">SS</span>}
                                                                         </div>
-                                                                        <input type="range" min="0" max="100" value={inLib.progress_percent} onChange={(e) => updateProgress(manga.id, parseInt(e.target.value))} class="w-full accent-brand-500 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer" />
+
+                                                                        <div onClick={() => setSelectedBook(manga)} class="aspect-[112/175] rounded-lg overflow-hidden bg-slate-955 mb-3 border border-slate-800 relative shadow-inner group-hover:scale-103 transition duration-350 cursor-pointer">
+                                                                            <img src={manga.cover_url} class="w-full h-full object-cover" />
+                                                                            <span class="absolute bottom-2 right-2 bg-black/80 text-[8px] font-bold px-1.5 py-0.5 rounded text-brand-300 font-roboto">{manga.category.toUpperCase()}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <h4 onClick={() => setSelectedBook(manga)} class="font-bold text-sm text-slate-100 line-clamp-1 font-outfit cursor-pointer hover:text-brand-500" title={manga.title}>{manga.title}</h4>
+                                                                            <p class="text-[11px] text-slate-400 mt-0.5 mb-2">{manga.author}</p>
+                                                                            
+                                                                            <div class="flex flex-wrap gap-1 mb-3">
+                                                                                {manga.genre.split(',').slice(0, 3).map((tagStr, tagIdx) => (
+                                                                                    <span key={tagIdx} class="text-[9px] bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded text-slate-400 font-medium">{tagStr.replace('Manga', '').trim()}</span>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {inLib ? (
+                                                                            <div class="space-y-2 mt-2">
+                                                                                <div class="flex justify-between items-center text-[10px]">
+                                                                                    <span class="text-slate-400">Chapters read:</span>
+                                                                                    <span class="text-brand-400 font-bold">{inLib.progress_percent}%</span>
+                                                                                </div>
+                                                                                <input type="range" min="0" max="100" value={inLib.progress_percent} onChange={(e) => updateProgress(manga.id, parseInt(e.target.value))} class="w-full accent-brand-500 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer" />
+                                                                            </div>
+                                                                        ) : (
+                                                                            <button onClick={() => addToLibrary(manga.id)} class="w-full bg-slate-955 hover:bg-brand-500 hover:text-white border border-slate-855 text-slate-350 py-1.5 rounded-lg text-xs font-semibold transition">
+                                                                                + Add Library
+                                                                            </button>
+                                                                        )}
                                                                     </div>
-                                                                ) : (
-                                                                    <button onClick={() => addToLibrary(manga.id)} class="w-full bg-brand-500 hover:bg-brand-400 text-black py-2 rounded-xl text-xs font-bold transition duration-300">
-                                                                        Add to Library
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
+                                                                );
+                                                            })}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
+                                        </>
                                 </div>
                             )}
 
