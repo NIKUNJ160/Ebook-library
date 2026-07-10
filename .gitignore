@@ -2,3 +2,5 @@ node_modules/
 .wrangler/
 .dev.vars
 _old_php/
+downloads/
+one_piece_chapters.json
