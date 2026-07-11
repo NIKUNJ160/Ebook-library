@@ -1,0 +1,220 @@
+/* Chapter Page Reader Stylesheet matching natomanga.com */
+
+.chapter-page-wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: var(--card-bg-color);
+  box-shadow: 0 4px 15px var(--shadow-color);
+  border-radius: 8px;
+}
+
+/* Minimalist Chapter Logo */
+.logo_chapter {
+  text-align: center;
+  margin-bottom: 15px;
+}
+.logo_chapter .logo-text {
+  font-family: 'Roboto', sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+/* Breadcrumbs inside reader */
+.bred_doc {
+  background-color: var(--bg-color);
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+.bred_doc a {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+.bred_doc span {
+  color: var(--text-muted);
+}
+
+/* Navigation controls wrap */
+.option_wrap {
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.navi-change-chapter {
+  padding: 8px 15px;
+  border: 1px solid var(--border-color);
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  font-weight: bold;
+  border-radius: 4px;
+  outline: none;
+  min-width: 250px;
+}
+
+.btn-navigation-chap {
+  display: flex;
+  gap: 10px;
+}
+
+.navi-change-chapter-btn {
+  background-color: var(--primary-color);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.3s;
+}
+.navi-change-chapter-btn:hover {
+  background-color: var(--secondary-color);
+  color: #fff;
+}
+
+.current-chapter {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--primary-color);
+  width: 100%;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* Top chapter helper details panel */
+.info-top-chapter {
+  display: block;
+  background-color: var(--card-bg-color);
+  border-left: 4px solid var(--primary-color);
+  margin-bottom: 25px;
+}
+.info-top-chapter h2 {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: var(--text-color);
+}
+.info-top-chapter-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.panel-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pn-op-img-sv {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+.pn-op-name {
+  color: var(--text-muted);
+  margin-right: 10px;
+}
+.pn-op-sv-img-btn {
+  background-color: var(--secondary-color);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.alertError {
+  background-color: #ffc107;
+  color: #212529;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.alertError:hover {
+  background-color: #e0a800;
+}
+
+/* Core images scroll reader container matching home-plate-villain */
+.container-chapter-reader {
+  max-width: 800px;
+  margin: 30px auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--bg-color);
+  padding: 15px 0;
+  border-radius: 6px;
+  gap: 15px;
+}
+
+.container-chapter-reader img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 2px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.footer-nav-chap {
+  margin-top: 20px;
+  justify-content: center;
+}
+
+/* PDF iframe styles */
+.pdf-reader-iframe {
+  border: none;
+  background-color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-radius: 4px;
+  margin: 0 auto;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .chapter-page-wrap {
+    padding: 10px;
+  }
+  .option_wrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .navi-change-chapter {
+    min-width: 100%;
+  }
+  .btn-navigation-chap {
+    justify-content: space-between;
+  }
+  .navi-change-chapter-btn {
+    flex-grow: 1;
+    justify-content: center;
+  }
+  .current-chapter {
+    font-size: 18px;
+  }
+}
