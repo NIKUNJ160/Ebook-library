@@ -37,15 +37,33 @@ CREATE TABLE IF NOT EXISTS items (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Chapters table (for serializations like weekly manga releases)
+CREATE TABLE IF NOT EXISTS chapters (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  chapter_number REAL NOT NULL,
+  title TEXT DEFAULT '',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Files table (individual image pages or PDFs)
 CREATE TABLE IF NOT EXISTS files (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  chapter_id INTEGER REFERENCES chapters(id) ON DELETE CASCADE,
   url TEXT NOT NULL,
   filename TEXT DEFAULT '',
   type TEXT DEFAULT 'image' CHECK(type IN ('image','pdf')),
   page_number INTEGER DEFAULT 1,
   size_bytes INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -67,6 +85,8 @@ CREATE INDEX IF NOT EXISTS idx_items_created  ON items(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_items_views    ON items(view_count DESC);
 CREATE INDEX IF NOT EXISTS idx_items_status   ON items(status);
 CREATE INDEX IF NOT EXISTS idx_files_item     ON files(item_id, page_number);
+CREATE INDEX IF NOT EXISTS idx_files_chapter  ON files(chapter_id);
+CREATE INDEX IF NOT EXISTS idx_chapters_item  ON chapters(item_id, chapter_number);
 
 -- ============================================================
 -- SEED: Categories
