@@ -2199,6 +2199,20 @@ app.post('/api/admin/control', async (c) => {
   const { action } = payload;
   const db = c.env.DB;
 
+  if (action === 'list_items') {
+    try {
+      const items = await db.prepare(`
+        SELECT i.title, i.slug, i.type, i.status, i.view_count, i.file_count, cat.name as category_name, i.updated_at
+        FROM items i
+        LEFT JOIN categories cat ON i.category_id = cat.id
+        ORDER BY i.updated_at DESC
+      `).all<any>();
+      return c.json({ success: true, items: items.results });
+    } catch (e: any) {
+      return c.json({ success: false, error: e.message }, 500);
+    }
+  }
+
   if (action === 'get_stats') {
     const itemsCount = await db.prepare('SELECT COUNT(*) as count FROM items').first<{ count: number }>();
     const categoriesCount = await db.prepare('SELECT COUNT(*) as count FROM categories').first<{ count: number }>();
@@ -2471,7 +2485,7 @@ app.get('/item/:slug', async (c) => {
               <div class="chapters-list-section" style="margin-top:30px;">
                 <h3 style="border-bottom: 2px solid var(--accent-orange); padding-bottom: 8px; font-weight:700;"><i class="fa-solid fa-list"></i> CHAPTER RELEASES</h3>
                 <div class="chapters-grid-list" style="display:grid; grid-template-columns:1fr; margin-top:15px; border: 1px solid var(--admin-border); border-radius:6px; background-color:#fff; overflow:hidden">
-                  ${chapters.map(chap => html`
+                  ${chapters.slice(0, 10).map(chap => html`
                     <div class="chapter-row" style="display:flex; justify-content:space-between; padding:12px 20px; border-bottom: 1px solid var(--admin-border); align-items:center;">
                       <span class="chap-name" style="font-weight:600">
                         <a href="/item/${itemQuery.slug}/chapter/${chap.chapter_number}" title="Read ${itemQuery.title} Chapter ${chap.chapter_number}">
@@ -2481,6 +2495,29 @@ app.get('/item/:slug', async (c) => {
                       <span class="chap-time" style="font-size:12px; color:var(--admin-text-light)"><i class="fa-regular fa-clock"></i> ${formatRelativeTime(chap.created_at)}</span>
                     </div>
                   `)}
+
+                  ${chapters.length > 10 
+                    ? html`
+                        <div id="hidden-chapters" style="display:none;">
+                          ${chapters.slice(10).map(chap => html`
+                            <div class="chapter-row" style="display:flex; justify-content:space-between; padding:12px 20px; border-bottom: 1px solid var(--admin-border); align-items:center;">
+                              <span class="chap-name" style="font-weight:600">
+                                <a href="/item/${itemQuery.slug}/chapter/${chap.chapter_number}" title="Read ${itemQuery.title} Chapter ${chap.chapter_number}">
+                                  Chapter ${chap.chapter_number}${chap.title ? `: ${chap.title}` : ''}
+                                </a>
+                              </span>
+                              <span class="chap-time" style="font-size:12px; color:var(--admin-text-light)"><i class="fa-regular fa-clock"></i> ${formatRelativeTime(chap.created_at)}</span>
+                            </div>
+                          `)}
+                        </div>
+                        <div style="text-align:center; padding:15px; background-color:#fafafa; border-top:1px solid var(--admin-border)">
+                          <button id="btn-expand-chapters" style="padding:8px 24px; font-size:13px; font-weight:600; cursor:pointer; border-radius:4px; display:inline-flex; align-items:center; gap:8px; border:none; background-color:#ff530d; color:#fff;" onclick="document.getElementById('hidden-chapters').style.display='block'; this.style.display='none';">
+                            <i class="fa fa-angle-double-down"></i> Show All Chapters (${chapters.length})
+                          </button>
+                        </div>
+                      `
+                    : ''
+                  }
                 </div>
               </div>
             `
