@@ -1,4 +1,17 @@
 /* Main Application Style Guide: Orange (#ff530d) & Teal (#059e9a) */
+/* Screen-reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
 :root {
   --primary-color: #ff530d;
   --secondary-color: #059e9a;
@@ -215,11 +228,14 @@ header {
 .notification-banner {
   background-color: var(--card-bg-color);
   border-left: 4px solid var(--secondary-color);
-  padding: 12px 15px;
+  padding: 10px 15px;
   border-radius: 4px;
   margin-bottom: 20px;
   box-shadow: 0 1px 3px var(--shadow-color);
   font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* MAIN BODY COLUMNS */

@@ -75,6 +75,15 @@ interface User {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
+// Security headers on every response (audit fix: CSP, framing, sniffing, referrer)
+app.use('*', async (c, next) => {
+  await next();
+  c.header('X-Frame-Options', 'DENY');
+  c.header('X-Content-Type-Options', 'nosniff');
+  c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self';");
+});
+
 // Helper to hash passwords securely using Web Crypto SHA-256
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -86,13 +95,8 @@ async function hashPassword(password: string): Promise<string> {
 
 // Helper to convert an uploaded multipart File into Base64 Data URL
 async function fileToBase64(file: File): Promise<string> {
-  const arrayBuffer = await file.arrayBuffer();
-  const bytes = new Uint8Array(arrayBuffer);
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return `data:${file.type};base64,${btoa(binary)}`;
+  const ab = await file.arrayBuffer();
+  return `data:${file.type};base64,${btoa(String.fromCharCode(...new Uint8Array(ab)))}`;
 }
 
 // Helper to retrieve all unique tags in the database to display as selectable options
@@ -135,46 +139,46 @@ function formatRelativeTime(dateStr: string): string {
   return `${month}-${day}`;
 }
 
-// Helper to resolve and attach latest updates (chapters or pages) to each book
+// Attach latest updates (chapters or pages) to items — single query per type, no N+1
 async function attachLatestUpdates(db: D1Database, items: LibraryItem[]): Promise<LibraryItem[]> {
   if (items.length === 0) return [];
-  
-  const updatedItems: LibraryItem[] = [];
+  const ids = items.map(i => i.id);
+  const placeholders = ids.map(() => '?').join(',');
 
-  for (const item of items) {
-    // Check if this item has chapters
-    const chaptersQuery = await db.prepare(`
-      SELECT * FROM chapters WHERE item_id = ? ORDER BY chapter_number DESC LIMIT 3
-    `).bind(item.id).all<Chapter>();
-    
-    if (chaptersQuery.results.length > 0) {
-      // Map chapters as updates
-      updatedItems.push({
-        ...item,
-        updates: chaptersQuery.results.map(c => ({
-          label: `Chapter ${c.chapter_number}`,
-          url: `/item/${item.slug}/chapter/${c.chapter_number}`,
-          created_at: c.created_at
-        }))
-      });
-    } else {
-      // Fallback: Map raw pages
-      const filesQuery = await db.prepare(`
-        SELECT * FROM files WHERE item_id = ? ORDER BY page_number DESC LIMIT 3
-      `).bind(item.id).all<FilePage>();
-      
-      updatedItems.push({
-        ...item,
-        updates: filesQuery.results.map(f => ({
-          label: `Page ${f.page_number}`,
-          url: `/item/${item.slug}/view/${f.page_number}`,
-          created_at: f.created_at
-        }))
-      });
+  // Fetch up to 3 latest chapters per item in one query
+  const chapRows = (await db.prepare(
+    `SELECT item_id, chapter_number, title, created_at FROM chapters WHERE item_id IN (${placeholders}) ORDER BY chapter_number DESC`
+  ).bind(...ids).all<{ item_id: number; chapter_number: number; title: string; created_at: string }>()).results;
+
+  // Group chapters by item_id
+  const chapMap = new Map<number, typeof chapRows>();
+  for (const r of chapRows) {
+    const arr = chapMap.get(r.item_id) ?? [];
+    if (arr.length < 3) arr.push(r);
+    chapMap.set(r.item_id, arr);
+  }
+
+  // Items without chapters need page fallback — fetch in one query
+  const noChapIds = ids.filter(id => !chapMap.has(id));
+  const pageMap = new Map<number, { label: string; url: string; created_at: string }[]>();
+  if (noChapIds.length > 0) {
+    const ph2 = noChapIds.map(() => '?').join(',');
+    const pageRows = (await db.prepare(
+      `SELECT item_id, page_number, created_at FROM files WHERE item_id IN (${ph2}) ORDER BY page_number DESC`
+    ).bind(...noChapIds).all<{ item_id: number; page_number: number; created_at: string }>()).results;
+    for (const r of pageRows) {
+      const arr = pageMap.get(r.item_id) ?? [];
+      if (arr.length < 3) arr.push({ label: `Page ${r.page_number}`, url: '', created_at: r.created_at });
+      pageMap.set(r.item_id, arr);
     }
   }
 
-  return updatedItems;
+  return items.map(item => {
+    const chaps = chapMap.get(item.id);
+    if (chaps) return { ...item, updates: chaps.map(c => ({ label: `Chapter ${c.chapter_number}`, url: `/item/${item.slug}/chapter/${c.chapter_number}`, created_at: c.created_at })) };
+    const pages = pageMap.get(item.id) ?? [];
+    return { ...item, updates: pages.map(f => ({ ...f, url: `/item/${item.slug}/view/${f.label.split(' ')[1]}` })) };
+  });
 }
 
 // Reusable blue pagination component matching natomanga.com format
@@ -222,21 +226,27 @@ const renderPagination = (basePath: string, currentPage: number, totalPages: num
   `;
 };
 
-// Layout Helper matching natomanga design doc
-const layout = (title: string, content: any, activeNav: string = 'home', extraHead: any = '', username: string | null = null) => html`
+// Layout Helper — accepts optional description+canonical for SEO
+const layout = (title: string, content: any, activeNav: string = 'home', extraHead: any = '', username: string | null = null, description: string = 'LibraryHub — browse and read free PDF documents, photo collections, manga, and illustrations online.', canonical: string = '') => html`
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ff530d">
   <title>${title} - LibraryHub</title>
+  <meta name="description" content="${description}">
+  ${canonical ? html`<link rel="canonical" href="${canonical}">` : ''}
+  <meta property="og:title" content="${title} - LibraryHub">
+  <meta property="og:description" content="${description}">
+  <meta property="og:type" content="website">
   <link rel="icon" type="image/webp" href="/images/favicon-manganato.webp">
-  <!-- Fonts -->
+  <!-- Fonts: only weights actually used -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <!-- FontAwesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/css/all.css">
   <link rel="stylesheet" href="/css/app.css">
@@ -244,9 +254,12 @@ const layout = (title: string, content: any, activeNav: string = 'home', extraHe
 </head>
 <body>
   <script>
-    // Theme toggle init
-    const theme = localStorage.getItem('themeMode') || 'light';
-    document.body.classList.add(theme);
+    (function(){
+      document.body.classList.add(localStorage.getItem('themeMode') || 'light');
+      if (localStorage.getItem('bannerDismissed')) {
+        document.addEventListener('DOMContentLoaded', function(){ var b = document.getElementById('site-banner'); if(b) b.style.display='none'; });
+      }
+    })();
   </script>
 
   <!-- HEADER -->
@@ -259,43 +272,44 @@ const layout = (title: string, content: any, activeNav: string = 'home', extraHe
       </div>
       <div class="top-header">
         <div class="searching">
-          <form action="/search" method="GET">
+          <form action="/search" method="GET" role="search">
+            <label for="search_story" class="sr-only">Search LibraryHub</label>
             <input type="text" id="search_story" name="q" placeholder="Search images, PDFs, collections..." autocomplete="off">
-            <button type="submit"><i class="fa fa-search"></i></button>
+            <button type="submit" aria-label="Submit search"><i class="fa fa-search" aria-hidden="true"></i></button>
           </form>
           <div id="search-autocomplete" class="search-autocomplete-box" style="display:none;"></div>
         </div>
         <div class="link-social-desktop">
-          <a href="#" class="social-btn fb"><i class="fab fa-facebook-f"></i></a>
-          <a href="#" class="social-btn discord"><i class="fab fa-discord"></i></a>
+          <a href="#" class="social-btn fb" aria-label="Facebook"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>
+          <a href="#" class="social-btn discord" aria-label="Discord"><i class="fab fa-discord" aria-hidden="true"></i></a>
         </div>
         <div class="user-options">
-          ${username 
+          ${username
             ? html`
                 <div class="user-profile-header">
-                  <span class="user-welcome"><i class="fa fa-user-circle"></i> ${username}</span>
+                  <span class="user-welcome"><i class="fa fa-user-circle" aria-hidden="true"></i> ${username}</span>
                   <a href="/profile" class="header-profile-btn" title="My Profile Dashboard">Profile</a>
-                  <a href="/logout" class="header-logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                  <a href="/logout" class="header-logout-btn" title="Logout" aria-label="Logout"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i></a>
                 </div>
               `
             : html`
                 <div class="user-auth-links">
-                  <a href="/login" class="header-login-btn"><i class="fa-solid fa-sign-in"></i> Sign In</a>
-                  <a href="/register" class="header-register-btn"><i class="fa-solid fa-user-plus"></i> Register</a>
+                  <a href="/login" class="header-login-btn"><i class="fa-solid fa-sign-in" aria-hidden="true"></i> Sign In</a>
+                  <a href="/register" class="header-register-btn"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Register</a>
                 </div>
               `
           }
-          <button id="theme-toggle" class="theme-toggle-btn" title="Toggle Dark/Light Mode">
-            <i class="fa-solid fa-moon"></i>
+          <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle dark/light mode" title="Toggle Dark/Light Mode">
+            <i class="fa-solid fa-moon" aria-hidden="true"></i>
           </button>
         </div>
       </div>
-      
-      <div class="mobile-menu-btn" id="mobile-menu-btn">
-        <i class="fa fa-bars"></i> MENU
-      </div>
 
-      <nav class="wrap-menu-primary" id="primary-nav">
+      <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open navigation menu" aria-expanded="false" aria-controls="primary-nav">
+        <i class="fa fa-bars" aria-hidden="true"></i><span class="sr-only">Menu</span>
+      </button>
+
+      <nav class="wrap-menu-primary" id="primary-nav" aria-label="Main navigation">
         <ul class="menu-primary">
           <li class="menu-item ${activeNav === 'home' ? 'active' : ''}"><a href="/">HOME</a></li>
           <li class="menu-item ${activeNav === 'latest' ? 'active' : ''}"><a href="/list/latest">LATEST ADDED</a></li>
@@ -308,10 +322,12 @@ const layout = (title: string, content: any, activeNav: string = 'home', extraHe
     </div>
   </header>
 
-  <!-- NOTIFICATION BANNER -->
+  <!-- NOTIFICATION BANNER (dismissible) -->
   <div class="container">
-    <div class="notification-banner">
-      <i class="fa-solid fa-bullhorn"></i> <strong>Welcome to LibraryHub!</strong> Enjoy reading free PDF documents, photo collections, and illustrations. Bookmark us by pressing <strong>Ctrl + D</strong>!
+    <div class="notification-banner" id="site-banner">
+      <i class="fa-solid fa-bullhorn" aria-hidden="true"></i>
+      <strong>Welcome to LibraryHub!</strong> Enjoy reading free PDF documents, photo collections, and illustrations. Bookmark us with <strong>Ctrl+D</strong>!
+      <button onclick="localStorage.setItem('bannerDismissed','1');this.parentElement.style.display='none';" aria-label="Dismiss banner" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:18px;color:inherit;padding:0 4px;">&times;</button>
     </div>
   </div>
 
@@ -324,16 +340,11 @@ const layout = (title: string, content: any, activeNav: string = 'home', extraHe
   <footer>
     <div class="container">
       <div class="footer-links">
-        <a href="#">About Us</a> | 
-        <a href="#">Contact Us</a> | 
-        <a href="#">Privacy Policy</a> | 
-        <a href="#">Terms of Use</a> | 
-        <a href="#">DMCA Takedown</a> | 
-        <a href="#">FAQ</a>
+        <a href="#">About Us</a> | <a href="#">Contact Us</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Use</a> | <a href="#">DMCA Takedown</a> | <a href="#">FAQ</a>
       </div>
       <div class="footer-content">
-        <p>Copyright © 2026 LibraryHub. All rights reserved.</p>
-        <p>All images, books, and PDFs are property of their respective owners. Support email: <span class="email-text">support@libraryhub.com</span></p>
+        <p>Copyright &copy; 2026 LibraryHub. All rights reserved.</p>
+        <p>All images, books, and PDFs are property of their respective owners. Support: <span class="email-text">support@libraryhub.com</span></p>
       </div>
     </div>
   </footer>
@@ -450,11 +461,12 @@ const renderSidebar = (categories: Category[], topItems: LibraryItem[]) => html`
 `;
 
 // Reusable card template component displaying latest updates/chapters
+const FALLBACK_IMG = '/images/no-cover.webp';
 const renderItemCard = (item: LibraryItem) => html`
   <div class="item-card ${item.is_hot ? 'item-hot' : ''} ${item.is_new ? 'item-new' : ''}">
     <div class="card-cover-wrap">
       <a href="/item/${item.slug}">
-        <img src="${item.cover_url}" alt="${item.title}" class="card-cover lazy-img" loading="lazy">
+        <img src="${item.cover_url}" alt="${item.title}" class="card-cover lazy-img" loading="lazy" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'">
       </a>
       ${item.is_hot ? html`<span class="badge badge-hot">HOT</span>` : ''}
       ${item.is_new ? html`<span class="badge badge-new">NEW</span>` : ''}
@@ -471,11 +483,11 @@ const renderItemCard = (item: LibraryItem) => html`
         `)}
       </div>
       <div class="card-meta">
-        <span class="card-views"><i class="fa fa-eye"></i> ${item.view_count.toLocaleString()} views</span>
-        <span class="card-rating"><i class="fa fa-star"></i> ${item.rating.toFixed(1)}</span>
+        <span class="card-views"><i class="fa fa-eye" aria-hidden="true"></i> ${item.view_count.toLocaleString()} views</span>
+        <span class="card-rating"><i class="fa fa-star" aria-hidden="true"></i> ${item.rating.toFixed(1)}</span>
       </div>
       <div class="card-bottom">
-        <span class="card-author"><i class="fa fa-user"></i> ${item.author}</span>
+        <span class="card-author"><i class="fa fa-user" aria-hidden="true"></i> ${item.author}</span>
         <a href="/item/${item.slug}" class="btn-read-card">View</a>
       </div>
     </div>
@@ -530,7 +542,7 @@ app.get('/', async (c) => {
     <div class="leftCol">
       <!-- Popular Carousel slider area -->
       <section class="popular-slider-section">
-        <h2 class="section-title"><i class="fa-solid fa-fire accent-orange-color"></i> POPULAR COLLECTIONS</h2>
+        <h1 class="section-title"><i class="fa-solid fa-fire accent-orange-color" aria-hidden="true"></i> POPULAR COLLECTIONS</h1>
         <div class="carousel-container">
           <div class="carousel-track-wrapper">
             <div class="carousel-track" id="carousel-track">
@@ -555,7 +567,7 @@ app.get('/', async (c) => {
 
       <!-- Latest Grid Releases -->
       <section class="latest-releases-section">
-        <h2 class="section-title"><i class="fa-solid fa-clock accent-teal-color"></i> LATEST ADDITIONS</h2>
+        <h2 class="section-title"><i class="fa-solid fa-clock accent-teal-color" aria-hidden="true"></i> LATEST ADDITIONS</h2>
         <div class="items-grid">
           ${latestItems.map(item => renderItemCard(item))}
         </div>
