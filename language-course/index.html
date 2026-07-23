@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinguaFlow — Learn Languages Smarter</title>
+  <meta name="description" content="Master any language with AI-powered lessons, live tutors, and a global community. LinguaFlow makes language learning fun, fast, and effective." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ========== NAVBAR ========== -->
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-inner">
+        <a href="index.html" class="nav-logo">
+          <div class="logo-icon">🌐</div>
+          LinguaFlow
+        </a>
+        <ul class="nav-links">
+          <li><a href="index.html" class="active">Home</a></li>
+          <li><a href="courses.html">Courses</a></li>
+          <li><a href="lessons.html">Lessons</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+        <div class="nav-actions">
+          <a href="contact.html" class="btn btn-outline">Sign In</a>
+          <a href="courses.html" class="btn btn-primary">Get Started</a>
+        </div>
+        <div class="hamburger" id="hamburger">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">Home</a>
+    <a href="courses.html">Courses</a>
+    <a href="lessons.html">Lessons</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="courses.html" class="btn btn-primary">Get Started Free</a>
+  </div>
+
+  <!-- ========== HERO ========== -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="container">
+      <div class="hero-grid">
+        <div class="hero-content">
+          <div class="hero-badge">🚀 #1 Language Learning Platform</div>
+          <h1 class="hero-title">
+            Speak Any<br>
+            <span class="text-gradient">Language</span><br>
+            With Confidence
+          </h1>
+          <p class="hero-desc">
+            Master Spanish, French, Japanese, and 20+ more languages with AI-powered lessons,
+            live tutors, and a thriving global community.
+          </p>
+          <div class="hero-actions">
+            <a href="courses.html" class="btn btn-primary" style="font-size:16px; padding:16px 32px;">
+              Start Learning Free →
+            </a>
+            <a href="lessons.html" class="btn btn-ghost">Watch Demo</a>
+          </div>
+          <div class="hero-stats">
+            <div class="stat-item">
+              <div class="stat-num"><span data-target="2" data-suffix="M+">0</span></div>
+              <div class="stat-label">Active Learners</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num"><span data-target="25" data-suffix="+">0</span></div>
+              <div class="stat-label">Languages</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num"><span data-target="98" data-suffix="%">0</span></div>
+              <div class="stat-label">Success Rate</div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div style="position:relative">
+            <div class="hero-card-main">
+              <h3 style="font-family:'Outfit',sans-serif; font-weight:800; margin-bottom:8px;">Choose Your Language</h3>
+              <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">Pick a language to get started instantly</p>
+              <div class="lang-flags">
+                <div class="flag-chip">🇪🇸 Spanish</div>
+                <div class="flag-chip">🇫🇷 French</div>
+                <div class="flag-chip">🇯🇵 Japanese</div>
+                <div class="flag-chip">🇩🇪 German</div>
+                <div class="flag-chip">🇨🇳 Mandarin</div>
+                <div class="flag-chip">🇮🇹 Italian</div>
+              </div>
+              <div class="progress-demo">
+                <div class="progress-label"><span>🇪🇸 Spanish — A2 Level</span><span>72%</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="width:72%"></div></div>
+                <div class="progress-label" style="margin-top:12px"><span>🇫🇷 French — B1 Level</span><span>45%</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="width:45%"></div></div>
+                <div class="progress-label" style="margin-top:12px"><span>🇯🇵 Japanese — A1 Level</span><span>20%</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div>
+              </div>
+            </div>
+            <!-- Floating Cards -->
+            <div class="floating-card">
+              <div class="fc-label">🔥 Daily Streak</div>
+              <div class="fc-val">42 Days</div>
+            </div>
+            <div class="floating-card">
+              <div class="fc-label">⭐ XP Earned</div>
+              <div class="fc-val">3,280</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== LANGUAGES ========== -->
+  <section class="section" style="background: var(--bg2);">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Languages</div>
+        <h2 class="section-title">25+ Languages to <span class="text-gradient">Explore</span></h2>
+        <p class="section-desc">From the most spoken to the most unique — we have every language you need.</p>
+      </div>
+      <div class="languages-grid">
+        <div class="glass-card lang-card fade-up" data-lang="spanish">
+          <span class="lang-emoji">🇪🇸</span>
+          <div class="lang-name">Spanish</div>
+          <div class="lang-students">580K learners</div>
+          <span class="lang-badge badge-popular">Most Popular</span>
+        </div>
+        <div class="glass-card lang-card fade-up" data-lang="french">
+          <span class="lang-emoji">🇫🇷</span>
+          <div class="lang-name">French</div>
+          <div class="lang-students">420K learners</div>
+          <span class="lang-badge badge-trending">Trending</span>
+        </div>
+        <div class="glass-card lang-card fade-up" data-lang="japanese">
+          <span class="lang-emoji">🇯🇵</span>
+          <div class="lang-name">Japanese</div>
+          <div class="lang-students">310K learners</div>
+          <span class="lang-badge badge-popular">Popular</span>
+        </div>
+        <div class="glass-card lang-card fade-up" data-lang="german">
+          <span class="lang-emoji">🇩🇪</span>
+          <div class="lang-name">German</div>
+          <div class="lang-students">280K learners</div>
+          <span class="lang-badge badge-trending">Trending</span>
+        </div>
+        <div class="glass-card lang-card fade-up" data-lang="mandarin">
+          <span class="lang-emoji">🇨🇳</span>
+          <div class="lang-name">Mandarin</div>
+          <div class="lang-students">260K learners</div>
+          <span class="lang-badge badge-popular">Popular</span>
+        </div>
+        <div class="glass-card lang-card fade-up" data-lang="italian">
+          <span class="lang-emoji">🇮🇹</span>
+          <div class="lang-name">Italian</div>
+          <div class="lang-students">190K learners</div>
+          <span class="lang-badge badge-new">New Courses</span>
+        </div>
+        <div class="glass-card lang-card fade-up" data-lang="arabic">
+          <span class="lang-emoji">🇸🇦</span>
+          <div class="lang-name">Arabic</div>
+          <div class="lang-students">145K learners</div>
+          <span class="lang-badge badge-new">New</span>
+        </div>
+        <div class="glass-card lang-card fade-up" data-lang="korean">
+          <span class="lang-emoji">🇰🇷</span>
+          <div class="lang-name">Korean</div>
+          <div class="lang-students">210K learners</div>
+          <span class="lang-badge badge-trending">Trending</span>
+        </div>
+        <div class="glass-card lang-card fade-up" data-lang="portuguese">
+          <span class="lang-emoji">🇧🇷</span>
+          <div class="lang-name">Portuguese</div>
+          <div class="lang-students">175K learners</div>
+          <span class="lang-badge badge-popular">Popular</span>
+        </div>
+        <div class="glass-card lang-card fade-up" data-lang="russian">
+          <span class="lang-emoji">🇷🇺</span>
+          <div class="lang-name">Russian</div>
+          <div class="lang-students">130K learners</div>
+          <span class="lang-badge badge-trending">Trending</span>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:40px;">
+        <a href="courses.html" class="btn btn-outline">View All Languages →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FEATURES ========== -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Why LinguaFlow</div>
+        <h2 class="section-title">Everything You Need to <span class="text-gradient">Succeed</span></h2>
+        <p class="section-desc">We combine the best teaching methods with cutting-edge technology.</p>
+      </div>
+      <div class="features-grid">
+        <div class="glass-card feature-card fade-up">
+          <div class="feature-icon" style="background:rgba(124,58,237,0.15)">🤖</div>
+          <div class="feature-title">AI-Powered Tutor</div>
+          <div class="feature-desc">Our AI adapts to your learning style, tracks your progress, and personalizes every lesson for maximum retention.</div>
+        </div>
+        <div class="glass-card feature-card fade-up">
+          <div class="feature-icon" style="background:rgba(245,158,11,0.15)">🎙️</div>
+          <div class="feature-title">Pronunciation Lab</div>
+          <div class="feature-desc">Record yourself and get instant feedback with waveform analysis. Sound like a native speaker in weeks.</div>
+        </div>
+        <div class="glass-card feature-card fade-up">
+          <div class="feature-icon" style="background:rgba(16,185,129,0.15)">👨‍🏫</div>
+          <div class="feature-title">Live Tutors</div>
+          <div class="feature-desc">Book 1-on-1 sessions with certified native-speaking tutors from around the world, anytime you want.</div>
+        </div>
+        <div class="glass-card feature-card fade-up">
+          <div class="feature-icon" style="background:rgba(239,68,68,0.15)">🏆</div>
+          <div class="feature-title">Gamification</div>
+          <div class="feature-desc">Earn XP, collect badges, maintain streaks, and compete on leaderboards. Learning has never been so addictive.</div>
+        </div>
+        <div class="glass-card feature-card fade-up">
+          <div class="feature-icon" style="background:rgba(59,130,246,0.15)">🌍</div>
+          <div class="feature-title">Community</div>
+          <div class="feature-desc">Connect with 2M+ learners worldwide for language exchange, practice sessions, and cultural immersion.</div>
+        </div>
+        <div class="glass-card feature-card fade-up">
+          <div class="feature-icon" style="background:rgba(236,72,153,0.15)">📜</div>
+          <div class="feature-title">Certificates</div>
+          <div class="feature-desc">Earn internationally recognized certificates aligned with CEFR standards (A1 to C2) to boost your career.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== LESSONS PREVIEW ========== -->
+  <section class="section" style="background: var(--bg2);">
+    <div class="container">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center;">
+        <div>
+          <div class="section-tag" style="text-align:left; display:inline-block; margin-bottom:16px;">Sample Lessons</div>
+          <h2 class="section-title" style="text-align:left; margin-bottom:16px;">Structured<br><span class="text-gradient">Learning Path</span></h2>
+          <p style="color:var(--text-muted); margin-bottom:36px; font-size:15px;">Every language has a complete curriculum with bite-sized lessons, quizzes, and real-world scenarios.</p>
+          <a href="lessons.html" class="btn btn-primary">Explore All Lessons →</a>
+        </div>
+        <div class="lessons-list">
+          <div class="glass-card lesson-item fade-up">
+            <div class="lesson-num">01</div>
+            <div class="lesson-info">
+              <div class="lesson-title">Greetings & Introductions</div>
+              <div class="lesson-meta">
+                <span>⏱ 15 min</span>
+                <span>📝 8 exercises</span>
+              </div>
+            </div>
+            <div class="lesson-status status-done">✓ Done</div>
+          </div>
+          <div class="glass-card lesson-item fade-up">
+            <div class="lesson-num">02</div>
+            <div class="lesson-info">
+              <div class="lesson-title">Numbers & Days</div>
+              <div class="lesson-meta">
+                <span>⏱ 20 min</span>
+                <span>📝 12 exercises</span>
+              </div>
+            </div>
+            <div class="lesson-status status-done">✓ Done</div>
+          </div>
+          <div class="glass-card lesson-item fade-up" style="border-color:var(--primary);">
+            <div class="lesson-num" style="background:rgba(124,58,237,0.3); border-color:var(--primary);">03</div>
+            <div class="lesson-info">
+              <div class="lesson-title">Food & Restaurants 🍕</div>
+              <div class="lesson-meta">
+                <span>⏱ 25 min</span>
+                <span>📝 15 exercises</span>
+              </div>
+            </div>
+            <div class="lesson-status status-current">▶ Current</div>
+          </div>
+          <div class="glass-card lesson-item fade-up" style="opacity:0.6;">
+            <div class="lesson-num" style="background:rgba(100,116,139,0.2); border-color:var(--text-dim); color:var(--text-dim);">04</div>
+            <div class="lesson-info">
+              <div class="lesson-title">Travel & Directions</div>
+              <div class="lesson-meta">
+                <span>⏱ 30 min</span>
+                <span>📝 18 exercises</span>
+              </div>
+            </div>
+            <div class="lesson-status status-locked">🔒 Locked</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== TESTIMONIALS ========== -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Success Stories</div>
+        <h2 class="section-title">Loved by <span class="text-gradient">Millions</span></h2>
+        <p class="section-desc">Real learners. Real results. Real languages spoken.</p>
+      </div>
+      <div class="testimonials-grid">
+        <div class="glass-card testimonial-card fade-up">
+          <div class="stars">★★★★★</div>
+          <div class="testi-quote">"</div>
+          <div class="testi-text">I went from zero to conversational Spanish in just 3 months! The AI tutor is incredible — it really knows where I struggle.</div>
+          <div class="testi-author">
+            <div class="testi-avatar">MK</div>
+            <div>
+              <div class="testi-name">Maria Kowalski</div>
+              <div class="testi-country">🇵🇱 Poland · Spanish learner</div>
+            </div>
+          </div>
+        </div>
+        <div class="glass-card testimonial-card fade-up">
+          <div class="stars">★★★★★</div>
+          <div class="testi-quote">"</div>
+          <div class="testi-text">The pronunciation lab helped me sound so much more natural. My Japanese colleagues were genuinely surprised at my progress!</div>
+          <div class="testi-author">
+            <div class="testi-avatar" style="background:linear-gradient(135deg,var(--success),#059669)">TH</div>
+            <div>
+              <div class="testi-name">Tom Harrison</div>
+              <div class="testi-country">🇬🇧 UK · Japanese learner</div>
+            </div>
+          </div>
+        </div>
+        <div class="glass-card testimonial-card fade-up">
+          <div class="stars">★★★★★</div>
+          <div class="testi-quote">"</div>
+          <div class="testi-text">Best investment I ever made. I got my B2 French certificate and landed a job in Paris. LinguaFlow changed my life!</div>
+          <div class="testi-author">
+            <div class="testi-avatar" style="background:linear-gradient(135deg,var(--accent),#d97706)">AN</div>
+            <div>
+              <div class="testi-name">Aisha Nkosi</div>
+              <div class="testi-country">🇿🇦 South Africa · French learner</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== PRICING ========== -->
+  <section class="section" style="background: var(--bg2);">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Pricing</div>
+        <h2 class="section-title">Simple, <span class="text-gradient">Transparent</span> Plans</h2>
+        <p class="section-desc">Start free. Upgrade when you're ready. No hidden fees.</p>
+      </div>
+      <div class="pricing-grid">
+        <div class="glass-card pricing-card fade-up">
+          <div class="price-plan">Free</div>
+          <div class="price-amount">
+            <span class="price-currency">$</span>
+            <span class="price-num">0</span>
+          </div>
+          <div class="price-period">forever free</div>
+          <ul class="price-features">
+            <li><span class="check">✓</span> 1 Language</li>
+            <li><span class="check">✓</span> 10 Lessons/month</li>
+            <li><span class="check">✓</span> Basic exercises</li>
+            <li><span class="check">✓</span> Community access</li>
+            <li class="disabled"><span class="cross">✗</span> AI Tutor</li>
+            <li class="disabled"><span class="cross">✗</span> Live tutors</li>
+            <li class="disabled"><span class="cross">✗</span> Certificates</li>
+          </ul>
+          <a href="courses.html" class="btn btn-outline" style="width:100%; justify-content:center;">Get Started Free</a>
+        </div>
+        <div class="glass-card pricing-card featured fade-up">
+          <div class="popular-badge">⭐ MOST POPULAR</div>
+          <div class="price-plan">Pro</div>
+          <div class="price-amount">
+            <span class="price-currency">$</span>
+            <span class="price-num" style="background:linear-gradient(135deg,#a78bfa,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">12</span>
+          </div>
+          <div class="price-period">per month · billed annually</div>
+          <ul class="price-features">
+            <li><span class="check">✓</span> All 25+ Languages</li>
+            <li><span class="check">✓</span> Unlimited Lessons</li>
+            <li><span class="check">✓</span> AI Tutor 24/7</li>
+            <li><span class="check">✓</span> Pronunciation Lab</li>
+            <li><span class="check">✓</span> 4 Live sessions/month</li>
+            <li><span class="check">✓</span> Certificates</li>
+            <li><span class="check">✓</span> Offline downloads</li>
+          </ul>
+          <a href="courses.html" class="btn btn-primary" style="width:100%; justify-content:center;" data-enroll>Start Pro Plan →</a>
+        </div>
+        <div class="glass-card pricing-card fade-up">
+          <div class="price-plan">Teams</div>
+          <div class="price-amount">
+            <span class="price-currency">$</span>
+            <span class="price-num">29</span>
+          </div>
+          <div class="price-period">per user · per month</div>
+          <ul class="price-features">
+            <li><span class="check">✓</span> Everything in Pro</li>
+            <li><span class="check">✓</span> Team dashboard</li>
+            <li><span class="check">✓</span> Progress analytics</li>
+            <li><span class="check">✓</span> Unlimited live sessions</li>
+            <li><span class="check">✓</span> Custom learning paths</li>
+            <li><span class="check">✓</span> Dedicated manager</li>
+            <li><span class="check">✓</span> API access</li>
+          </ul>
+          <a href="contact.html" class="btn btn-outline" style="width:100%; justify-content:center;">Contact Sales</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CTA ========== -->
+  <section class="section">
+    <div class="container">
+      <div class="cta-banner">
+        <h2 class="cta-title">Ready to Speak a<br><span class="text-gradient">New Language?</span></h2>
+        <p class="cta-desc">Join 2 million learners already on their journey. Start your first lesson today — it's completely free!</p>
+        <div class="cta-actions">
+          <a href="courses.html" class="btn btn-primary" style="font-size:16px; padding:16px 36px;">Start for Free →</a>
+          <a href="about.html" class="btn btn-ghost">Learn More</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-logo">
+            <div class="logo-icon">🌐</div>
+            LinguaFlow
+          </div>
+          <p class="footer-desc">The world's most loved language learning platform. Master any language with AI, live tutors, and a global community.</p>
+          <div class="footer-socials">
+            <div class="social-btn">𝕏</div>
+            <div class="social-btn">in</div>
+            <div class="social-btn">▶</div>
+            <div class="social-btn">📘</div>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Learn</h4>
+          <ul class="footer-links">
+            <li><a href="courses.html">All Courses</a></li>
+            <li><a href="lessons.html">Lessons</a></li>
+            <li><a href="#">Live Classes</a></li>
+            <li><a href="#">Vocabulary</a></li>
+            <li><a href="#">Practice Tests</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul class="footer-links">
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="#">Careers</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Press</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <ul class="footer-links">
+            <li><a href="#">Help Center</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Cookie Policy</a></li>
+            <li><a href="#">Accessibility</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 LinguaFlow. All rights reserved.</span>
+        <span>Made with ❤️ for language lovers worldwide 🌍</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    // Hamburger toggle
+    document.getElementById('hamburger').addEventListener('click', function() {
+      this.classList.toggle('open');
+      document.getElementById('mobileMenu').classList.toggle('open');
+    });
+  </script>
+</body>
+</html>

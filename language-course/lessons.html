@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lessons — LinguaFlow</title>
+  <meta name="description" content="Explore structured Spanish, French, Japanese and more lessons on LinguaFlow. Video lessons, exercises, quizzes and pronunciation practice." />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .lesson-layout { display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: start; }
+    @media (max-width: 900px) { .lesson-layout { grid-template-columns: 1fr; } }
+    .lesson-sidebar { position: sticky; top: 100px; }
+    .vocab-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+    .vocab-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .vocab-word { font-weight: 600; }
+    .vocab-trans { color: var(--text-muted); }
+    .exercise-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+    .exercise-type {
+      font-size: 11px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--primary-light);
+      margin-bottom: 12px;
+    }
+    .exercise-q { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+    .options { display: flex; flex-direction: column; gap: 10px; }
+    .option {
+      padding: 14px 18px;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: var(--transition);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .option:hover { border-color: var(--primary); background: rgba(124,58,237,0.08); }
+    .option.correct { border-color: var(--success); background: rgba(16,185,129,0.1); color: var(--success); }
+    .option.wrong { border-color: var(--danger); background: rgba(239,68,68,0.1); color: var(--danger); }
+    .option-letter {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 12px;
+      flex-shrink: 0;
+    }
+    .lang-selector {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 32px;
+    }
+    .lang-select-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 18px;
+      border-radius: 50px;
+      border: 1px solid var(--card-border);
+      background: var(--card);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer; color: var(--text-muted);
+      transition: var(--transition);
+    }
+    .lang-select-btn.active, .lang-select-btn:hover {
+      border-color: var(--primary);
+      background: rgba(124,58,237,0.1);
+      color: var(--primary-light);
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-inner">
+        <a href="index.html" class="nav-logo">
+          <div class="logo-icon">🌐</div>
+          LinguaFlow
+        </a>
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="courses.html">Courses</a></li>
+          <li><a href="lessons.html" class="active">Lessons</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+        <div class="nav-actions">
+          <a href="contact.html" class="btn btn-outline">Sign In</a>
+          <a href="courses.html" class="btn btn-primary">All Courses</a>
+        </div>
+        <div class="hamburger" id="hamburger">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">Home</a>
+    <a href="courses.html">Courses</a>
+    <a href="lessons.html" class="active">Lessons</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+  </div>
+
+  <!-- Page Hero -->
+  <div class="page-hero">
+    <div class="container">
+      <div class="section-tag">Interactive Lessons</div>
+      <h1 class="page-hero-title">Learn by <span class="text-gradient">Doing</span></h1>
+      <p class="page-hero-desc">Video lessons, exercises, quizzes, and pronunciation practice — all in one place.</p>
+    </div>
+  </div>
+
+  <section class="section" style="padding-top: 40px;">
+    <div class="container">
+
+      <!-- Language Selector -->
+      <div class="lang-selector">
+        <button class="lang-select-btn active">🇪🇸 Spanish</button>
+        <button class="lang-select-btn">🇫🇷 French</button>
+        <button class="lang-select-btn">🇯🇵 Japanese</button>
+        <button class="lang-select-btn">🇩🇪 German</button>
+        <button class="lang-select-btn">🇰🇷 Korean</button>
+        <button class="lang-select-btn">🇮🇹 Italian</button>
+      </div>
+
+      <!-- Course Hero -->
+      <div class="lesson-hero">
+        <div class="lesson-hero-emoji">🇪🇸</div>
+        <div class="lesson-hero-info">
+          <h1>Spanish for Absolute Beginners</h1>
+          <p>Master the basics of Spanish — greetings, numbers, daily phrases, and essential grammar.</p>
+          <div class="lesson-hero-meta">
+            <span>📚 6 Units · 60 Lessons</span>
+            <span>⏱ 40 hours total</span>
+            <span>🏆 CEFR A1–A2</span>
+            <span>⭐ 4.9/5 · 12,000 reviews</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Layout -->
+      <div class="lesson-layout">
+
+        <!-- Left: Video Player + Exercise -->
+        <div>
+          <!-- Video Player -->
+          <div class="player-container">
+            <div class="player-overlay">
+              <div style="text-align:center;">
+                <div style="font-size:100px; margin-bottom:16px;">🇪🇸</div>
+                <div class="play-btn" id="playBtn">▶</div>
+              </div>
+            </div>
+            <div class="player-progress">
+              <div class="player-bar">
+                <div class="player-fill" id="playerFill"></div>
+              </div>
+              <div class="player-info">
+                <span>Lesson 3 · Food & Restaurants 🍕</span>
+                <span id="playerTime">5:24 / 15:00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lesson Nav -->
+          <div style="display:flex; gap:12px; margin-bottom:32px; flex-wrap:wrap;">
+            <button class="btn btn-ghost" style="font-size:13px; padding:10px 16px;">← Previous</button>
+            <button class="btn btn-primary" style="font-size:13px; padding:10px 16px;">Continue Learning</button>
+            <button class="btn btn-ghost" style="font-size:13px; padding:10px 16px;">Next →</button>
+          </div>
+
+          <!-- Exercise: Multiple Choice -->
+          <div class="exercise-card fade-up">
+            <div class="exercise-type">📝 Exercise 1 · Multiple Choice</div>
+            <div class="exercise-q">How do you say "The food is delicious" in Spanish?</div>
+            <div class="options">
+              <div class="option" onclick="checkAnswer(this, false)">
+                <span class="option-letter">A</span>
+                La comida es aburrida
+              </div>
+              <div class="option" onclick="checkAnswer(this, true)">
+                <span class="option-letter">B</span>
+                La comida está deliciosa ✓
+              </div>
+              <div class="option" onclick="checkAnswer(this, false)">
+                <span class="option-letter">C</span>
+                El comida es delicioso
+              </div>
+              <div class="option" onclick="checkAnswer(this, false)">
+                <span class="option-letter">D</span>
+                La comida fue deliciosa
+              </div>
+            </div>
+          </div>
+
+          <!-- Exercise: Fill in the blank -->
+          <div class="exercise-card fade-up">
+            <div class="exercise-type">✏️ Exercise 2 · Fill in the Blank</div>
+            <div class="exercise-q">Complete the sentence: "Quiero ___ una mesa para dos personas."</div>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
+              <button class="btn btn-ghost" onclick="fillBlank(this,'pedir')" style="font-size:14px; padding:10px 20px;">pedir</button>
+              <button class="btn btn-ghost" onclick="fillBlank(this,'comer')" style="font-size:14px; padding:10px 20px;">comer</button>
+              <button class="btn btn-ghost" onclick="fillBlank(this,'reservar')" style="font-size:14px; padding:10px 20px;">reservar</button>
+              <button class="btn btn-ghost" onclick="fillBlank(this,'beber')" style="font-size:14px; padding:10px 20px;">beber</button>
+            </div>
+            <div id="fillResult" style="font-size:14px; color:var(--text-muted); min-height:20px;"></div>
+          </div>
+
+          <!-- Exercise: Pronunciation -->
+          <div class="exercise-card fade-up">
+            <div class="exercise-type">🎙️ Exercise 3 · Pronunciation</div>
+            <div class="exercise-q">Repeat this phrase:</div>
+            <div style="background:rgba(124,58,237,0.1); border:1px solid rgba(124,58,237,0.3); border-radius:12px; padding:20px; margin-bottom:20px; text-align:center;">
+              <div style="font-size:24px; font-weight:700; font-family:'Outfit',sans-serif; margin-bottom:8px;">¿Me trae la carta, por favor?</div>
+              <div style="font-size:13px; color:var(--text-muted);">"Could you bring me the menu, please?"</div>
+            </div>
+            <div style="display:flex; gap:12px;">
+              <button class="btn btn-ghost" onclick="showToast('🔊','Audio playing: ¿Me trae la carta, por favor?')" style="font-size:13px;">🔊 Listen</button>
+              <button class="btn btn-primary" onclick="showToast('🎙️','Recording... Speak now!')" style="font-size:13px;">🎙️ Record Yourself</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Sidebar - Curriculum -->
+        <div class="lesson-sidebar">
+          <div class="glass-card" style="padding:24px; margin-bottom:24px;">
+            <h3 style="font-family:'Outfit',sans-serif; font-size:17px; font-weight:700; margin-bottom:16px;">📈 Your Progress</h3>
+            <div style="margin-bottom:12px;">
+              <div class="progress-label"><span>Unit 1 — Basics</span><span>100%</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:100%; background:var(--success)"></div></div>
+            </div>
+            <div style="margin-bottom:12px;">
+              <div class="progress-label"><span>Unit 2 — Numbers</span><span>100%</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:100%; background:var(--success)"></div></div>
+            </div>
+            <div style="margin-bottom:12px;">
+              <div class="progress-label"><span>Unit 3 — Food 🍕</span><span>40%</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div>
+            </div>
+            <div style="margin-bottom:12px;">
+              <div class="progress-label"><span>Unit 4 — Travel</span><span>0%</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+            </div>
+            <div style="text-align:center; margin-top:16px; padding-top:16px; border-top:1px solid var(--card-border);">
+              <div style="font-size:28px; font-weight:800; font-family:'Outfit',sans-serif;">32%</div>
+              <div style="font-size:12px; color:var(--text-muted);">Overall Completion</div>
+            </div>
+          </div>
+
+          <!-- Curriculum -->
+          <div class="glass-card" style="padding:24px;">
+            <h3 style="font-family:'Outfit',sans-serif; font-size:17px; font-weight:700; margin-bottom:20px;">📚 Curriculum</h3>
+            <div class="curriculum">
+
+              <div>
+                <div class="unit-header">
+                  <div class="unit-num">1</div>
+                  <div class="unit-title">Basics & Greetings</div>
+                </div>
+                <div class="unit-lessons">
+                  <div class="unit-lesson-item">
+                    <div class="lesson-icon">✅</div>
+                    <div class="lesson-item-title">Hola & Adiós</div>
+                    <div class="lesson-duration">12 min</div>
+                  </div>
+                  <div class="unit-lesson-item">
+                    <div class="lesson-icon">✅</div>
+                    <div class="lesson-item-title">¿Cómo te llamas?</div>
+                    <div class="lesson-duration">15 min</div>
+                  </div>
+                  <div class="unit-lesson-item">
+                    <div class="lesson-icon">✅</div>
+                    <div class="lesson-item-title">Countries & Nationalities</div>
+                    <div class="lesson-duration">18 min</div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="unit-header">
+                  <div class="unit-num">2</div>
+                  <div class="unit-title">Numbers & Time</div>
+                </div>
+                <div class="unit-lessons">
+                  <div class="unit-lesson-item">
+                    <div class="lesson-icon">✅</div>
+                    <div class="lesson-item-title">1 to 100</div>
+                    <div class="lesson-duration">10 min</div>
+                  </div>
+                  <div class="unit-lesson-item">
+                    <div class="lesson-icon">✅</div>
+                    <div class="lesson-item-title">Days & Months</div>
+                    <div class="lesson-duration">14 min</div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="unit-header">
+                  <div class="unit-num" style="background:var(--accent)">3</div>
+                  <div class="unit-title">Food & Restaurants 🍕</div>
+                </div>
+                <div class="unit-lessons">
+                  <div class="unit-lesson-item">
+                    <div class="lesson-icon">✅</div>
+                    <div class="lesson-item-title">Menu Vocabulary</div>
+                    <div class="lesson-duration">12 min</div>
+                  </div>
+                  <div class="unit-lesson-item active">
+                    <div class="lesson-icon">▶️</div>
+                    <div class="lesson-item-title">Ordering in a Restaurant</div>
+                    <div class="lesson-duration">15 min</div>
+                  </div>
+                  <div class="unit-lesson-item">
+                    <div class="lesson-icon">🔒</div>
+                    <div class="lesson-item-title">Asking for the Bill</div>
+                    <div class="lesson-duration">10 min</div>
+                  </div>
+                  <div class="unit-lesson-item">
+                    <div class="lesson-icon">🔒</div>
+                    <div class="lesson-item-title">Food Preferences Quiz</div>
+                    <div class="lesson-duration">8 min</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="opacity:0.5;">
+                <div class="unit-header">
+                  <div class="unit-num" style="background:var(--text-dim)">4</div>
+                  <div class="unit-title">Travel & Directions</div>
+                </div>
+                <div class="unit-lessons">
+                  <div class="unit-lesson-item">
+                    <div class="lesson-icon">🔒</div>
+                    <div class="lesson-item-title">At the Airport</div>
+                    <div class="lesson-duration">20 min</div>
+                  </div>
+                  <div class="unit-lesson-item">
+                    <div class="lesson-icon">🔒</div>
+                    <div class="lesson-item-title">Asking for Directions</div>
+                    <div class="lesson-duration">18 min</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Vocabulary -->
+          <div class="glass-card" style="padding:24px; margin-top:24px;">
+            <h3 style="font-family:'Outfit',sans-serif; font-size:17px; font-weight:700; margin-bottom:4px;">🗂️ Today's Vocabulary</h3>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:0;">Food & Restaurant vocabulary</p>
+            <div class="vocab-list">
+              <div class="vocab-item"><span class="vocab-word">la carta</span><span class="vocab-trans">the menu</span></div>
+              <div class="vocab-item"><span class="vocab-word">el plato</span><span class="vocab-trans">the dish/plate</span></div>
+              <div class="vocab-item"><span class="vocab-word">pedir</span><span class="vocab-trans">to order</span></div>
+              <div class="vocab-item"><span class="vocab-word">la cuenta</span><span class="vocab-trans">the bill</span></div>
+              <div class="vocab-item"><span class="vocab-word">delicioso/a</span><span class="vocab-trans">delicious</span></div>
+              <div class="vocab-item"><span class="vocab-word">el camarero</span><span class="vocab-trans">the waiter</span></div>
+              <div class="vocab-item"><span class="vocab-word">reservar</span><span class="vocab-trans">to reserve</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-logo"><div class="logo-icon">🌐</div> LinguaFlow</div>
+          <p class="footer-desc">The world's most loved language learning platform.</p>
+          <div class="footer-socials">
+            <div class="social-btn">𝕏</div>
+            <div class="social-btn">in</div>
+            <div class="social-btn">▶</div>
+            <div class="social-btn">📘</div>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Learn</h4>
+          <ul class="footer-links">
+            <li><a href="courses.html">All Courses</a></li>
+            <li><a href="lessons.html">Lessons</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul class="footer-links">
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <ul class="footer-links">
+            <li><a href="#">Help Center</a></li>
+            <li><a href="#">Privacy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 LinguaFlow. All rights reserved.</span>
+        <span>Made with ❤️ for language lovers worldwide 🌍</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    document.getElementById('hamburger').addEventListener('click', function() {
+      this.classList.toggle('open');
+      document.getElementById('mobileMenu').classList.toggle('open');
+    });
+
+    // Language selector
+    document.querySelectorAll('.lang-select-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.lang-select-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        showToast('🌐', 'Switching to ' + this.textContent.trim() + ' lessons...');
+      });
+    });
+
+    // Multiple choice
+    function checkAnswer(el, correct) {
+      document.querySelectorAll('.option').forEach(o => o.classList.remove('correct','wrong'));
+      el.classList.add(correct ? 'correct' : 'wrong');
+      showToast(correct ? '✅' : '❌', correct ? 'Correct! ¡Muy bien!' : 'Oops! Try again.');
+    }
+
+    // Fill in blank
+    function fillBlank(btn, word) {
+      document.querySelectorAll('.exercise-card .btn-ghost').forEach(b => b.style.background = '');
+      btn.style.background = word === 'reservar' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.15)';
+      const res = document.getElementById('fillResult');
+      if (word === 'reservar') {
+        res.textContent = '✅ Correct! "Quiero reservar una mesa para dos personas." — I want to reserve a table for two.';
+        res.style.color = 'var(--success)';
+      } else {
+        res.textContent = '❌ Not quite! Think about booking a table. Try again!';
+        res.style.color = 'var(--danger)';
+      }
+    }
+
+    // Simulate player progress
+    let progress = 35;
+    const fillEl = document.getElementById('playerFill');
+    const timeEl = document.getElementById('playerTime');
+    document.getElementById('playBtn').addEventListener('click', function() {
+      this.textContent = '⏸';
+      showToast('▶️', 'Lesson 3: Ordering in a Restaurant — Playing!');
+      const interval = setInterval(() => {
+        progress = Math.min(progress + 1, 100);
+        if (fillEl) fillEl.style.width = progress + '%';
+        const sec = Math.floor(progress / 100 * 900);
+        const m = Math.floor(sec/60), s = sec % 60;
+        if (timeEl) timeEl.textContent = `${m}:${s.toString().padStart(2,'0')} / 15:00`;
+        if (progress >= 100) {
+          clearInterval(interval);
+          showToast('🎉', 'Lesson complete! +50 XP earned!');
+        }
+      }, 200);
+    });
+  </script>
+</body>
+</html>

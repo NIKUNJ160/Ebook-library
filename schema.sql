@@ -194,3 +194,11 @@ INSERT OR IGNORE INTO files (item_id, url, filename, type, page_number) VALUES
 UPDATE categories SET item_count = (
   SELECT COUNT(*) FROM items WHERE category_id = categories.id AND status = 'active'
 );
+
+-- H2 FIX: login rate limiting table (brute-force protection)
+CREATE TABLE IF NOT EXISTS login_attempts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ip TEXT NOT NULL,
+  attempted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_ip_time ON login_attempts (ip, attempted_at);
