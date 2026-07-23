@@ -75,28 +75,33 @@ interface User {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-// Security headers on every response (audit fix: CSP, framing, sniffing, referrer)
+// Security headers — M2 FIX: removed unsafe-inline from script-src
 app.use('*', async (c, next) => {
   await next();
   c.header('X-Frame-Options', 'DENY');
   c.header('X-Content-Type-Options', 'nosniff');
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
-  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self';");
+  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self';");
 });
 
-// Helper to hash passwords securely using Web Crypto SHA-256
+// C2 FIX: PBKDF2 with 200k iterations — not crackable with rainbow tables
 async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password + 'salt_value_123');
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode('lh-s4lt-2026'), iterations: 200_000 },
+    key, 256
+  );
+  return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Helper to convert an uploaded multipart File into Base64 Data URL
+// L3 FIX: chunked base64 to avoid stack overflow on large files
 async function fileToBase64(file: File): Promise<string> {
-  const ab = await file.arrayBuffer();
-  return `data:${file.type};base64,${btoa(String.fromCharCode(...new Uint8Array(ab)))}`;
+  if (file.size > 2 * 1024 * 1024) throw new Error('Cover image must be under 2MB');
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  return `data:${file.type};base64,${btoa(binary)}`;
 }
 
 // Helper to retrieve all unique tags in the database to display as selectable options
@@ -623,28 +628,41 @@ app.get('/login', async (c) => {
   return c.html(layout('Sign In', content, 'login', '', null));
 });
 
-// POST Login Handler
+// POST Login Handler — H2: basic brute-force tracking via D1 failed attempts
 app.post('/login', async (c) => {
   const body = await c.req.parseBody();
-  const inputUsername = (body.username as string || '').trim();
+  // M1 FIX: sanitize reflected username to prevent XSS
+  const inputUsername = (body.username as string || '').trim().replace(/[<>"'&]/g, '');
   const inputPassword = body.password as string || '';
   const db = c.env.DB;
+  const ip = c.req.header('CF-Connecting-IP') || 'unknown';
+
+  // H2 FIX: block after 10 failures per IP per hour (stored in D1)
+  const failKey = `login_fail:${ip}`;
+  const failRow = await db.prepare('SELECT COUNT(*) as n FROM login_attempts WHERE ip = ? AND attempted_at > datetime("now","-1 hour")').bind(ip).first<{ n: number }>().catch(() => null);
+  if (failRow && failRow.n >= 10) {
+    return c.html('<h2>Too many login attempts. Please try again in 1 hour.</h2>', 429);
+  }
 
   const user = await db.prepare('SELECT * FROM users WHERE username = ?').bind(inputUsername).first<User>();
 
   if (user) {
     const hashedInput = await hashPassword(inputPassword);
     if (user.password === hashedInput) {
+      // Clear failures on success
+      await db.prepare('DELETE FROM login_attempts WHERE ip = ?').bind(ip).run().catch(() => {});
       setCookie(c, 'user_session', user.username, {
         path: '/',
         secure: true,
         httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7, // 7 days
+        maxAge: 60 * 60 * 24 * 7,
         sameSite: 'Lax'
       });
       return c.redirect('/profile');
     }
   }
+  // Record failed attempt
+  await db.prepare('INSERT INTO login_attempts (ip) VALUES (?) ON CONFLICT DO NOTHING').bind(ip).run().catch(() => {});
 
   // Failed login
   const categoriesQuery = db.prepare(`SELECT * FROM categories ORDER BY name ASC`).all<Category>();
@@ -894,6 +912,9 @@ app.get('/profile', async (c) => {
     <!-- Dynamic Profile script for bookmarks/history rendering -->
     <script>
       document.addEventListener('DOMContentLoaded', () => {
+        // M4 FIX: sanitize localStorage values before innerHTML injection
+        const esc = s => String(s).replace(/[<>"'&]/g, c => ({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c]));
+
         // Tab switcher
         const tabBtns = document.querySelectorAll('.profile-tab-btn');
         const tabPanes = document.querySelectorAll('.profile-tab-pane');
@@ -922,15 +943,15 @@ app.get('/profile', async (c) => {
             card.className = 'profile-bookmark-card';
             card.innerHTML = \`
               <div class="profile-card-cover-wrap">
-                <a href="/item/\${b.slug}">
-                  <img src="\${b.cover}" alt="\${b.title}" class="profile-card-cover" loading="lazy">
+                <a href="/item/\${esc(b.slug)}">
+                  <img src="\${esc(b.cover)}" alt="\${esc(b.title)}" class="profile-card-cover" loading="lazy">
                 </a>
               </div>
               <div class="profile-card-details">
-                <h4><a href="/item/\${b.slug}">\${b.title}</a></h4>
+                <h4><a href="/item/\${esc(b.slug)}">\${esc(b.title)}</a></h4>
                 <div class="profile-card-actions">
-                  <a href="/item/\${b.slug}" class="profile-btn-read">Read Now</a>
-                  <button class="profile-btn-unbookmark" data-slug="\${b.slug}"><i class="fa-solid fa-bookmark-slash"></i> Remove</button>
+                  <a href="/item/\${esc(b.slug)}" class="profile-btn-read">Read Now</a>
+                  <button class="profile-btn-unbookmark" data-slug="\${esc(b.slug)}"><i class="fa-solid fa-bookmark-slash"></i> Remove</button>
                 </div>
               </div>
             \`;
@@ -965,15 +986,15 @@ app.get('/profile', async (c) => {
             const card = document.createElement('div');
             card.className = 'profile-history-row';
             card.innerHTML = \`
-              <img src="\${h.cover}" class="profile-history-cover" loading="lazy">
+              <img src="\${esc(h.cover)}" class="profile-history-cover" loading="lazy">
               <div class="profile-history-info">
-                <h4><a href="/item/\${h.slug}">\${h.title}</a></h4>
-                <p class="history-page-progress"><i class="fa-solid fa-book-open-reader"></i> Last read \${h.lastChapter ? 'Chapter ' + h.lastChapter : 'Page ' + h.lastPage} of \${h.totalPages}</p>
+                <h4><a href="/item/\${esc(h.slug)}">\${esc(h.title)}</a></h4>
+                <p class="history-page-progress"><i class="fa-solid fa-book-open-reader"></i> Last read \${h.lastChapter ? 'Chapter ' + esc(h.lastChapter) : 'Page ' + esc(h.lastPage)} of \${esc(h.totalPages)}</p>
                 <p class="history-timestamp"><i class="fa fa-clock"></i> \${dateStr}</p>
               </div>
               <div class="profile-history-actions">
-                <a href="/item/\${h.slug}\${h.lastChapter ? '/chapter/' + h.lastChapter : '/view/' + h.lastPage}" class="profile-btn-resume">Resume</a>
-                <button class="profile-btn-del-history" data-slug="\${h.slug}"><i class="fa-regular fa-trash-can"></i></button>
+                <a href="/item/\${esc(h.slug)}\${h.lastChapter ? '/chapter/' + esc(h.lastChapter) : '/view/' + esc(h.lastPage)}" class="profile-btn-resume">Resume</a>
+                <button class="profile-btn-del-history" data-slug="\${esc(h.slug)}"><i class="fa-regular fa-trash-can"></i></button>
               </div>
             \`;
             
@@ -1002,12 +1023,28 @@ app.get('/profile', async (c) => {
 // ADMIN DASHBOARD CONTROLLERS (CRUD & STATS)
 // ==========================================
 
+// L2 FIX: no fallback — deny if env var missing
+function requireAdminKey(c: any): string | null {
+  const key = c.env.INVITE_CODE;
+  return key || null;
+}
+
+// H3 FIX: single reusable auth check — session stores hashed token, not raw key
+async function isAdminAuthed(c: any): Promise<boolean> {
+  const key = requireAdminKey(c);
+  if (!key) return false;
+  const session = getCookie(c, 'admin_session');
+  return session === await hashPassword(key + '_admin');
+}
+
 // GET Admin Index (Dashboard / Login)
 app.get('/admin', async (c) => {
+  const expectedKey = requireAdminKey(c);
+  // H3 FIX: session stores a hashed token, not the raw key
   const adminSession = getCookie(c, 'admin_session');
-  const expectedKey = c.env.INVITE_CODE || 'nikunj2024';
+  const sessionValid = expectedKey && adminSession === await hashPassword(expectedKey + '_admin');
 
-  if (!adminSession || adminSession !== expectedKey) {
+  if (!expectedKey || !sessionValid) {
     const content = html`
       <div class="admin-login-wrapper">
         <h2 class="admin-login-title"><span style="color:#ff530d">Admin</span><span style="color:#059e9a">Hub</span> Login</h2>
@@ -1072,8 +1109,9 @@ app.get('/admin', async (c) => {
 
     <div class="admin-panel">
       <div class="remote-code-box">
-        <i class="fa fa-info-circle"></i> <strong>Remote Control API Key:</strong> You can control this website remotely using the endpoints below.
-        Use Header: <code>Authorization: Bearer ${expectedKey}</code> or <code>X-Admin-Key: ${expectedKey}</code>. 
+        <!-- C1 FIX: key value never rendered in HTML -->
+        <i class="fa fa-info-circle"></i> <strong>Remote Control API:</strong>
+        Use <code>Authorization: Bearer &lt;your-admin-key&gt;</code> or <code>X-Admin-Key: &lt;your-admin-key&gt;</code>.
         Endpoint: <code>POST /api/admin/control</code>
       </div>
 
@@ -1122,19 +1160,20 @@ app.get('/admin', async (c) => {
   return c.html(adminLayout('Dashboard', content, 'dashboard'));
 });
 
-// POST Admin Login
+// POST Admin Login — H3 FIX: store hashed token, not raw key
 app.post('/admin/login', async (c) => {
   const body = await c.req.parseBody();
-  const inputKey = body.admin_key as string;
-  const expectedKey = c.env.INVITE_CODE || 'nikunj2024';
+  const inputKey = body.admin_key as string || '';
+  const expectedKey = requireAdminKey(c);
 
-  if (inputKey === expectedKey) {
-    setCookie(c, 'admin_session', expectedKey, {
+  if (expectedKey && inputKey === expectedKey) {
+    const sessionToken = await hashPassword(expectedKey + '_admin');
+    setCookie(c, 'admin_session', sessionToken, {
       path: '/',
       secure: true,
       httpOnly: true,
-      maxAge: 60 * 60 * 2, // 2 hours
-      sameSite: 'Lax'
+      maxAge: 60 * 60 * 2,
+      sameSite: 'Strict'
     });
     return c.redirect('/admin');
   }
@@ -1166,9 +1205,9 @@ app.get('/admin/logout', async (c) => {
 
 // GET Manage Items Page
 app.get('/admin/items', async (c) => {
+  const expectedKey = requireAdminKey(c);
   const adminSession = getCookie(c, 'admin_session');
-  const expectedKey = c.env.INVITE_CODE || 'nikunj2024';
-  if (!adminSession || adminSession !== expectedKey) {
+  if (!expectedKey || adminSession !== await hashPassword(expectedKey + '_admin')) {
     return c.redirect('/admin');
   }
 
@@ -1227,11 +1266,11 @@ app.get('/admin/items', async (c) => {
   return c.html(adminLayout('Manage Books', content, 'items'));
 });
 
-// GET Create Item Page (with JSZip, custom categories, Cover Upload and selectable tags)
+// GET Create Item Page
 app.get('/admin/items/new', async (c) => {
+  const expectedKey = requireAdminKey(c);
   const adminSession = getCookie(c, 'admin_session');
-  const expectedKey = c.env.INVITE_CODE || 'nikunj2024';
-  if (!adminSession || adminSession !== expectedKey) {
+  if (!expectedKey || adminSession !== await hashPassword(expectedKey + '_admin')) {
     return c.redirect('/admin');
   }
 
@@ -1507,9 +1546,7 @@ app.get('/admin/items/new', async (c) => {
 
 // POST Create Item Handler (Supports Multipart Cover Uploads and Custom Categories)
 app.post('/admin/items/new', async (c) => {
-  const adminSession = getCookie(c, 'admin_session');
-  const expectedKey = c.env.INVITE_CODE || 'nikunj2024';
-  if (!adminSession || adminSession !== expectedKey) {
+  if (!await isAdminAuthed(c)) {
     return c.redirect('/admin');
   }
 
@@ -1611,9 +1648,7 @@ app.post('/admin/items/new', async (c) => {
 
 // GET Edit Item Page (Supports JSZip, Cover Upload, selectable tags, and Chapter Management!)
 app.get('/admin/items/edit/:slug', async (c) => {
-  const adminSession = getCookie(c, 'admin_session');
-  const expectedKey = c.env.INVITE_CODE || 'nikunj2024';
-  if (!adminSession || adminSession !== expectedKey) {
+  if (!await isAdminAuthed(c)) {
     return c.redirect('/admin');
   }
 
@@ -1964,9 +1999,7 @@ app.get('/admin/items/edit/:slug', async (c) => {
 
 // POST Edit Item Handler
 app.post('/admin/items/edit/:slug', async (c) => {
-  const adminSession = getCookie(c, 'admin_session');
-  const expectedKey = c.env.INVITE_CODE || 'nikunj2024';
-  if (!adminSession || adminSession !== expectedKey) {
+  if (!await isAdminAuthed(c)) {
     return c.redirect('/admin');
   }
 
@@ -2075,9 +2108,7 @@ app.post('/admin/items/edit/:slug', async (c) => {
 
 // POST Add New Chapter
 app.post('/admin/items/edit/:slug/chapters/new', async (c) => {
-  const adminSession = getCookie(c, 'admin_session');
-  const expectedKey = c.env.INVITE_CODE || 'nikunj2024';
-  if (!adminSession || adminSession !== expectedKey) {
+  if (!await isAdminAuthed(c)) {
     return c.redirect('/admin');
   }
 
@@ -2128,9 +2159,7 @@ app.post('/admin/items/edit/:slug/chapters/new', async (c) => {
 
 // GET Delete Chapter
 app.get('/admin/items/edit/:slug/chapters/delete/:chapterId', async (c) => {
-  const adminSession = getCookie(c, 'admin_session');
-  const expectedKey = c.env.INVITE_CODE || 'nikunj2024';
-  if (!adminSession || adminSession !== expectedKey) {
+  if (!await isAdminAuthed(c)) {
     return c.redirect('/admin');
   }
 
@@ -2158,9 +2187,7 @@ app.get('/admin/items/edit/:slug/chapters/delete/:chapterId', async (c) => {
 
 // GET Delete Item
 app.get('/admin/items/delete/:slug', async (c) => {
-  const adminSession = getCookie(c, 'admin_session');
-  const expectedKey = c.env.INVITE_CODE || 'nikunj2024';
-  if (!adminSession || adminSession !== expectedKey) {
+  if (!await isAdminAuthed(c)) {
     return c.redirect('/admin');
   }
 
@@ -2202,8 +2229,8 @@ app.post('/api/admin/control', async (c) => {
     token = adminKeyHeader;
   }
 
-  const expectedKey = c.env.INVITE_CODE || 'nikunj2024';
-  if (!token || token !== expectedKey) {
+  const expectedKey = requireAdminKey(c);
+  if (!expectedKey || !token || token !== expectedKey) {
     return c.json({ success: false, error: 'Unauthorized' }, 401);
   }
 
@@ -2350,8 +2377,9 @@ app.post('/api/admin/control', async (c) => {
         params.push(author);
       }
       if (views !== undefined) {
-        setClauses.push('view_count = ?');
-        params.push(views);
+        // H4 FIX: validate and clamp view count — no negative or non-numeric values
+        const safeViews = Math.max(0, Math.floor(Number(views)));
+        if (!isNaN(safeViews)) { setClauses.push('view_count = ?'); params.push(safeViews); }
       }
 
       if (setClauses.length === 0) {
@@ -2384,8 +2412,13 @@ app.get('/item/:slug', async (c) => {
   const db = c.env.DB;
   const username = getCookie(c, 'user_session') || null;
 
-  // Increase view count
-  await db.prepare('UPDATE items SET view_count = view_count + 1 WHERE slug = ?').bind(slug).run();
+  // H1 FIX: debounce view count — only increment once per visitor per item per session
+  const viewedKey = `viewed_${slug}`;
+  const alreadyViewed = getCookie(c, viewedKey);
+  if (!alreadyViewed) {
+    await db.prepare('UPDATE items SET view_count = view_count + 1 WHERE slug = ?').bind(slug).run();
+    setCookie(c, viewedKey, '1', { path: '/', maxAge: 60 * 60 * 24, httpOnly: true, sameSite: 'Lax' });
+  }
 
   // Fetch Item details
   const itemQuery = await db.prepare(`

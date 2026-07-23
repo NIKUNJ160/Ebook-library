@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact — LinguaFlow</title>
+  <meta name="description" content="Get in touch with LinguaFlow. We're here to help with courses, technical support, partnerships, and anything else you need." />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .faq-item {
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      margin-bottom: 12px;
+      transition: var(--transition);
+    }
+    .faq-item:hover { border-color: rgba(124,58,237,0.4); }
+    .faq-q {
+      padding: 18px 20px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card);
+    }
+    .faq-q::after { content: '+'; font-size: 20px; color: var(--primary-light); transition: var(--transition); }
+    .faq-item.open .faq-q::after { content: '−'; }
+    .faq-a {
+      display: none;
+      padding: 0 20px 18px;
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      background: var(--card);
+    }
+    .faq-item.open .faq-a { display: block; }
+    .map-card {
+      background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(245,158,11,0.05));
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 40px;
+      text-align: center;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-inner">
+        <a href="index.html" class="nav-logo">
+          <div class="logo-icon">🌐</div>
+          LinguaFlow
+        </a>
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="courses.html">Courses</a></li>
+          <li><a href="lessons.html">Lessons</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html" class="active">Contact</a></li>
+        </ul>
+        <div class="nav-actions">
+          <a href="#" class="btn btn-outline" data-enroll>Sign In</a>
+          <a href="courses.html" class="btn btn-primary">Get Started</a>
+        </div>
+        <div class="hamburger" id="hamburger">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">Home</a>
+    <a href="courses.html">Courses</a>
+    <a href="lessons.html">Lessons</a>
+    <a href="about.html">About</a>
+    <a href="contact.html" class="active">Contact</a>
+  </div>
+
+  <!-- Page Hero -->
+  <div class="page-hero">
+    <div class="container">
+      <div class="section-tag">Get In Touch</div>
+      <h1 class="page-hero-title">We'd Love to <span class="text-gradient">Hear from You</span></h1>
+      <p class="page-hero-desc">Have questions, feedback, or just want to say hello? Our team is here and ready to help.</p>
+    </div>
+  </div>
+
+  <!-- Contact Section -->
+  <section class="section" style="padding-top:40px;">
+    <div class="container">
+      <div class="contact-grid">
+
+        <!-- Left: Info -->
+        <div>
+          <div class="contact-info">
+            <div class="glass-card contact-item fade-up">
+              <div class="contact-icon">📧</div>
+              <div>
+                <h4>Email Us</h4>
+                <p>hello@linguaflow.com</p>
+                <p style="font-size:12px; margin-top:4px;">We reply within 24 hours on weekdays.</p>
+              </div>
+            </div>
+            <div class="glass-card contact-item fade-up">
+              <div class="contact-icon">💬</div>
+              <div>
+                <h4>Live Chat</h4>
+                <p>Available Mon–Fri, 9am–6pm UTC</p>
+                <p style="font-size:12px; margin-top:4px;">Average response time: 3 minutes.</p>
+              </div>
+            </div>
+            <div class="glass-card contact-item fade-up">
+              <div class="contact-icon">📱</div>
+              <div>
+                <h4>Phone Support</h4>
+                <p>+1 (800) 555-LINGUA</p>
+                <p style="font-size:12px; margin-top:4px;">Pro & Teams plan members only.</p>
+              </div>
+            </div>
+            <div class="glass-card contact-item fade-up">
+              <div class="contact-icon">🤝</div>
+              <div>
+                <h4>Partnerships</h4>
+                <p>partners@linguaflow.com</p>
+                <p style="font-size:12px; margin-top:4px;">Schools, businesses, and content creators.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Map Card -->
+          <div class="map-card fade-up">
+            <div style="font-size:48px; margin-bottom:16px;">🏢</div>
+            <h3 style="font-family:'Outfit',sans-serif; font-size:20px; font-weight:700; margin-bottom:8px;">Our Headquarters</h3>
+            <p style="color:var(--text-muted); font-size:14px;">
+              LinguaFlow Inc.<br>
+              123 Language Street, Suite 400<br>
+              San Francisco, CA 94105, USA
+            </p>
+            <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--card-border);">
+              <p style="font-size:13px; color:var(--text-muted);">Also offices in: London 🇬🇧 · Tokyo 🇯🇵 · Berlin 🇩🇪 · São Paulo 🇧🇷</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Form -->
+        <div>
+          <div class="glass-card form-card fade-up">
+            <h2 style="font-family:'Outfit',sans-serif; font-size:24px; font-weight:800; margin-bottom:8px;">Send Us a Message</h2>
+            <p style="color:var(--text-muted); font-size:14px; margin-bottom:28px;">Fill out the form and we'll get back to you as soon as possible.</p>
+
+            <form id="contactForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="firstName">First Name</label>
+                  <input type="text" id="firstName" placeholder="Sofia" required />
+                </div>
+                <div class="form-group">
+                  <label for="lastName">Last Name</label>
+                  <input type="text" id="lastName" placeholder="Chen" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="sofia@example.com" required />
+              </div>
+              <div class="form-group">
+                <label for="subject">Subject</label>
+                <select id="subject">
+                  <option value="">Select a topic...</option>
+                  <option value="courses">Course Question</option>
+                  <option value="technical">Technical Support</option>
+                  <option value="billing">Billing & Payments</option>
+                  <option value="partnership">Partnership Inquiry</option>
+                  <option value="tutor">Become a Tutor</option>
+                  <option value="feedback">Feedback & Suggestions</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="language">Language of Interest</label>
+                <select id="language">
+                  <option value="">Select a language (optional)</option>
+                  <option>🇪🇸 Spanish</option>
+                  <option>🇫🇷 French</option>
+                  <option>🇯🇵 Japanese</option>
+                  <option>🇩🇪 German</option>
+                  <option>🇰🇷 Korean</option>
+                  <option>🇮🇹 Italian</option>
+                  <option>🇸🇦 Arabic</option>
+                  <option>🇨🇳 Mandarin</option>
+                  <option>🇧🇷 Portuguese</option>
+                  <option>🇷🇺 Russian</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="message">Message</label>
+                <textarea id="message" placeholder="Tell us how we can help you..." required></textarea>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
+                <input type="checkbox" id="newsletter" style="width:auto; accent-color:var(--primary);" />
+                <label for="newsletter" style="font-size:13px; color:var(--text-muted); margin:0; cursor:pointer;">
+                  Subscribe to our newsletter for learning tips and language updates
+                </label>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; font-size:15px; padding:16px;">
+                Send Message →
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FAQ Section -->
+      <div style="margin-top:80px;">
+        <div class="section-header">
+          <div class="section-tag">FAQ</div>
+          <h2 class="section-title">Frequently Asked <span class="text-gradient">Questions</span></h2>
+        </div>
+        <div style="max-width:720px; margin:0 auto;">
+          <div class="faq-item">
+            <div class="faq-q">Is LinguaFlow really free to start?</div>
+            <div class="faq-a">Yes! Our Free plan gives you access to 1 language with 10 lessons per month, basic exercises, and community access — no credit card required. You can upgrade anytime.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">How long does it take to learn a language on LinguaFlow?</div>
+            <div class="faq-a">It depends on the language and your effort. Most learners reach conversational level (B1) in 3–6 months with daily 30-minute sessions. Our AI adapts to your pace to maximize efficiency.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">Can I cancel my Pro subscription anytime?</div>
+            <div class="faq-a">Absolutely. You can cancel anytime from your account settings. If you cancel, you'll retain access until the end of your current billing period — no questions asked.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">Are the certificates recognized internationally?</div>
+            <div class="faq-a">Our certificates are aligned with the CEFR framework (Common European Framework of Reference for Languages), which is recognized worldwide by universities and employers.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">How do I become a tutor on LinguaFlow?</div>
+            <div class="faq-a">We're always looking for passionate native speakers and certified language teachers. Apply via the "Become a Tutor" option in the contact form above and we'll review your application within 5 business days.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">Is LinguaFlow available on mobile?</div>
+            <div class="faq-a">Yes! Our iOS and Android apps are available for free. You can download lessons for offline study, practice vocabulary on the go, and maintain your daily learning streaks from anywhere.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-logo"><div class="logo-icon">🌐</div> LinguaFlow</div>
+          <p class="footer-desc">The world's most loved language learning platform.</p>
+          <div class="footer-socials">
+            <div class="social-btn">𝕏</div>
+            <div class="social-btn">in</div>
+            <div class="social-btn">▶</div>
+            <div class="social-btn">📘</div>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Learn</h4>
+          <ul class="footer-links">
+            <li><a href="courses.html">All Courses</a></li>
+            <li><a href="lessons.html">Lessons</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul class="footer-links">
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <ul class="footer-links">
+            <li><a href="#">Help Center</a></li>
+            <li><a href="#">Privacy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 LinguaFlow. All rights reserved.</span>
+        <span>Made with ❤️ for language lovers worldwide 🌍</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    document.getElementById('hamburger').addEventListener('click', function() {
+      this.classList.toggle('open');
+      document.getElementById('mobileMenu').classList.toggle('open');
+    });
+
+    // FAQ accordion
+    document.querySelectorAll('.faq-q').forEach(q => {
+      q.addEventListener('click', function() {
+        const item = this.parentElement;
+        const isOpen = item.classList.contains('open');
+        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+        if (!isOpen) item.classList.add('open');
+      });
+    });
+  </script>
+</body>
+</html>
