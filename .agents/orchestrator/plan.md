@@ -11,9 +11,9 @@ This plan outlines the milestones and subagent execution for evaluating and impr
 | 2 | Codebase Evaluation across 5 Lenses (R2) | Deep audit of `src/index.ts` and `public/css/app.css` across Visual Design, Code Quality, AI Features, Performance, Mobile Responsiveness | PLANNED | TBD |
 | 3 | Top 5 Improvements Artifact (R3) | `top5_improvements.md` with 5 ranked suggestions, Before/After snippets/wireframes, Why, Effort | PLANNED | TBD |
 | 4 | Implementation & Verification (R4) | Low/Medium effort suggestions implemented, `npx tsc --noEmit` passing, git commit `feat: teamwork review — apply low/medium effort improvements` | DONE | worker_m4 |
-| 5 | Commit Pending Agent Files on main (R1) | Stage and commit pending `.agents/` changes on `main` with `chore: update agent briefings and progress logs`, push `main` to `origin` | IN_PROGRESS | TBD |
-| 6 | Create 6 Isolated PR-Ready Branches & Push (R2, R3) | Create 6 isolated feature branches from logical parent bases, cherry-pick target commits, resolve conflicts preferring cherry-picked content, push to `origin` | PLANNED | TBD |
-| 7 | Create BRANCHES.md & Final Push (R4) | Create `BRANCHES.md` on repo root on `main`, commit `docs: add BRANCHES.md branch guide`, push to `origin/main`, verify git status clean | PLANNED | TBD |
+| 5 | Commit Pending Agent Files on main (R1) | Stage and commit pending `.agents/` changes on `main` with `chore: update agent briefings and progress logs`, push `main` to `origin` | DONE | worker_git_org |
+| 6 | Create 6 Isolated PR-Ready Branches & Push (R2, R3) | Create 6 isolated feature branches from logical parent bases, cherry-pick target commits, resolve conflicts preferring cherry-picked content, push to `origin` | DONE | worker_git_org |
+| 7 | Create BRANCHES.md & Final Push (R4) | Create `BRANCHES.md` on repo root on `main`, commit `docs: add BRANCHES.md branch guide`, push to `origin/main`, verify git status clean | DONE | worker_git_org |
 
 ## Execution Details
 
