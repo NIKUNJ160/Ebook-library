@@ -1,3 +1,20 @@
+// TODO (High Effort Refactor): Architecture Modularization Plan
+// Currently src/index.ts is a single monolithic worker entrypoint (~3200+ LOC).
+// Planned Refactoring Structure:
+// 1. src/routes/
+//    - auth.ts (login, register, logout handlers)
+//    - admin.ts (admin dashboard, items CRUD, category CRUD)
+//    - items.ts (item details, chapter reader, gallery view)
+//    - api.ts (search autocomplete, history, rating endpoints)
+// 2. src/services/
+//    - db.ts (D1 database client & helpers)
+//    - ai.ts (Workers AI recommendation engine & fallbacks)
+//    - auth.ts (PBKDF2 hashing, cookie session management)
+// 3. src/views/
+//    - layout.ts (main HTML shell & admin shell layouts)
+//    - sidebar.ts (reusable sidebar component)
+//    - components/ (cards, pagination, breadcrumbs, widgets)
+
 import { Hono, Context } from 'hono';
 import { html } from 'hono/html';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
@@ -7,6 +24,7 @@ type Bindings = {
   ALLOW_REGISTRATION: string;
   INVITE_CODE: string;
   JWT_SECRET_KEY: string;
+  AI?: any;
 };
 
 // Type definitions matching database schema
@@ -84,6 +102,17 @@ app.use('*', async (c, next) => {
   c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self';");
 });
 
+// Static asset Cache-Control header middleware for performance
+app.use('/css/*', async (c, next) => {
+  await next();
+  c.header('Cache-Control', 'public, max-age=31536000, immutable');
+});
+
+app.use('/js/*', async (c, next) => {
+  await next();
+  c.header('Cache-Control', 'public, max-age=31536000, immutable');
+});
+
 // C2 FIX: PBKDF2 with 200k iterations — not crackable with rainbow tables
 async function hashPassword(password: string): Promise<string> {
   const enc = new TextEncoder();
@@ -102,6 +131,77 @@ async function fileToBase64(file: File): Promise<string> {
   let binary = '';
   for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
   return `data:${file.type};base64,${btoa(binary)}`;
+}
+
+// Helper function for AI reading recommendations using Workers AI (@cf/meta/llama-3.1-8b-instruct) or SQL tag similarity fallback
+async function getAIRecommendations(
+  env: Bindings,
+  db: D1Database,
+  userHistorySlugs: string[] = [],
+  currentItemTags: string[] = [],
+  currentItemId?: number
+): Promise<{ recommendations: LibraryItem[]; isAiGenerated: boolean }> {
+  if (env && env.AI && typeof env.AI.run === 'function') {
+    try {
+      const candidates = (await db.prepare(
+        `SELECT id, title, slug, tags, cover_url, view_count, rating, category_id, description FROM items WHERE status = 'active' AND id != ? ORDER BY view_count DESC LIMIT 12`
+      ).bind(currentItemId || 0).all<LibraryItem>()).results || [];
+
+      if (candidates.length > 0) {
+        const prompt = `Select top 3-4 recommended item slugs from candidates based on history [${userHistorySlugs.join(', ')}] and current tags [${currentItemTags.join(', ')}].
+Candidates: ${JSON.stringify(candidates.map(c => ({ slug: c.slug, title: c.title, tags: c.tags })))}
+Return ONLY a valid JSON array of string slugs like ["slug1", "slug2", "slug3"].`;
+
+        const aiRes = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+          messages: [
+            { role: 'system', content: 'You are a precise recommendation assistant. Output strictly a JSON string array of slugs.' },
+            { role: 'user', content: prompt }
+          ]
+        }) as any;
+
+        const resText = aiRes?.response || (typeof aiRes === 'string' ? aiRes : '');
+        const jsonMatch = resText.match(/\[.*?\]/s);
+        if (jsonMatch) {
+          const suggestedSlugs: string[] = JSON.parse(jsonMatch[0]);
+          if (Array.isArray(suggestedSlugs) && suggestedSlugs.length > 0) {
+            const matched = candidates.filter(c => suggestedSlugs.includes(c.slug));
+            if (matched.length > 0) {
+              return { recommendations: matched.slice(0, 4), isAiGenerated: true };
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Workers AI recommendation fallback to SQL:', err);
+    }
+  }
+
+  // Fallback: SQL tag similarity + popularity matching
+  try {
+    const candidates = (await db.prepare(
+      `SELECT * FROM items WHERE status = 'active' AND id != ? ORDER BY view_count DESC, rating DESC LIMIT 20`
+    ).bind(currentItemId || 0).all<LibraryItem>()).results || [];
+
+    if (currentItemTags.length === 0 && userHistorySlugs.length === 0) {
+      return { recommendations: candidates.slice(0, 4), isAiGenerated: false };
+    }
+
+    const scored = candidates.map(item => {
+      let score = 0;
+      let itemTagsArr: string[] = [];
+      try { itemTagsArr = JSON.parse(item.tags || '[]'); } catch (e) {}
+      const tagMatches = itemTagsArr.filter(t => currentItemTags.includes(t)).length;
+      score += tagMatches * 3;
+      if (userHistorySlugs.includes(item.slug)) score += 5;
+      score += (item.rating || 0);
+      return { item, score };
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+    return { recommendations: scored.slice(0, 4).map(s => s.item), isAiGenerated: false };
+  } catch (err) {
+    return { recommendations: [], isAiGenerated: false };
+  }
 }
 
 // Helper to retrieve all unique tags in the database to display as selectable options
@@ -406,7 +506,7 @@ const adminLayout = (title: string, content: any, activeNav: string = 'dashboard
 `;
 
 // Sidebar Helper
-const renderSidebar = (categories: Category[], topItems: LibraryItem[]) => html`
+const renderSidebar = (categories: Category[], topItems: LibraryItem[], aiRecs?: LibraryItem[]) => html`
 <div class="rightCol">
   <!-- Advanced Filter Widget -->
   <div class="panel-widget">
@@ -426,6 +526,29 @@ const renderSidebar = (categories: Category[], topItems: LibraryItem[]) => html`
       </form>
     </div>
   </div>
+
+  ${aiRecs && aiRecs.length > 0 ? html`
+    <!-- AI Reading Recommendations Widget -->
+    <div class="panel-widget ai-sidebar-widget glassmorphic-hero">
+      <h3 class="widget-title" style="color: #8b5cf6;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI RECOMMENDED</h3>
+      <div class="widget-content top-list-wrap">
+        ${aiRecs.slice(0, 3).map((item) => html`
+          <div class="top-item-row">
+            <a href="/item/${item.slug}" class="top-item-cover-link">
+              <img src="${item.cover_url}" alt="${item.title}" class="top-item-cover" loading="lazy">
+            </a>
+            <div class="top-item-meta">
+              <h4><a href="/item/${item.slug}" title="${item.title}">${item.title}</a></h4>
+              <span class="top-item-views"><i class="fa fa-eye"></i> ${(item.view_count || 0).toLocaleString()} views</span>
+              <div class="star-rating-small">
+                <i class="fa fa-star star-filled"></i> <span>${(item.rating || 0).toFixed(1)}</span>
+              </div>
+            </div>
+          </div>
+        `)}
+      </div>
+    </div>
+  ` : ''}
 
   <!-- Top Ranked Widget -->
   <div class="panel-widget">
@@ -1617,12 +1740,14 @@ app.post('/admin/items/new', async (c) => {
     const item = await db.prepare('SELECT id FROM items WHERE slug = ?').bind(slug).first<{ id: number }>();
     
     if (item && fileUrls.length > 0) {
-      for (let i = 0; i < fileUrls.length; i++) {
-        await db.prepare(`
-          INSERT INTO files (item_id, url, filename, type, page_number)
-          VALUES (?, ?, ?, ?, ?)
-        `).bind(item.id, fileUrls[i], `page-${i + 1}`, type === 'pdf' ? 'pdf' : 'image', i + 1).run();
-      }
+      const stmt = db.prepare(`
+        INSERT INTO files (item_id, url, filename, type, page_number)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+      const batchStmts = fileUrls.map((url, i) =>
+        stmt.bind(item.id, url, `page-${i + 1}`, type === 'pdf' ? 'pdf' : 'image', i + 1)
+      );
+      await db.batch(batchStmts);
     }
 
     // Update category counts
@@ -2082,11 +2207,15 @@ app.post('/admin/items/edit/:slug', async (c) => {
     await db.prepare('DELETE FROM files WHERE item_id = ? AND chapter_id IS NULL').bind(item.id).run();
 
     // Insert new direct pages
-    for (let i = 0; i < fileUrls.length; i++) {
-      await db.prepare(`
+    if (fileUrls.length > 0) {
+      const stmt = db.prepare(`
         INSERT INTO files (item_id, url, filename, type, page_number)
         VALUES (?, ?, ?, ?, ?)
-      `).bind(item.id, fileUrls[i], `page-${i + 1}`, type === 'pdf' ? 'pdf' : 'image', i + 1).run();
+      `);
+      const batchStmts = fileUrls.map((url, i) =>
+        stmt.bind(item.id, url, `page-${i + 1}`, type === 'pdf' ? 'pdf' : 'image', i + 1)
+      );
+      await db.batch(batchStmts);
     }
 
     // Refresh file count from sum of files
@@ -2450,9 +2579,13 @@ app.get('/item/:slug', async (c) => {
 
   const [categoriesRes, topRes] = await Promise.all([categoriesQuery, topItemsQuery]);
 
-  const categories = categoriesRes.results;
+    const categories = categoriesRes.results;
   const topItems = topRes.results;
   const files = filesQuery.results;
+
+  const currentItemTags: string[] = JSON.parse(itemQuery.tags || '[]');
+  const aiRecsResult = await getAIRecommendations(c.env, db, [], currentItemTags, itemQuery.id);
+  const aiRecommendations = aiRecsResult.recommendations;
 
   const content = html`
     <div class="leftCol">
@@ -2596,11 +2729,45 @@ app.get('/item/:slug', async (c) => {
               </div>
             `
         }
+
+        <!-- Smart AI Reading Recommendations Widget -->
+        ${aiRecommendations.length > 0 ? html`
+          <div class="ai-recommendations-widget glassmorphic-hero" style="margin-top: 30px; padding: 20px; border-radius: 12px;">
+            <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: var(--text-color); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-wand-magic-sparkles" style="color: #8b5cf6;"></i> Smart AI Reading Recommendations
+              </h3>
+              <span class="badge-type" style="background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 11px; text-transform: uppercase;">
+                ${aiRecsResult.isAiGenerated ? '✨ AI Powered' : '🏷️ Tag Similarity'}
+              </span>
+            </div>
+            <div class="ai-recs-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px;">
+              ${aiRecommendations.map(rec => html`
+                <div class="card-item glass-card 3d-card-item" style="padding: 10px;">
+                  <div class="card-cover-wrap" style="position: relative; overflow: hidden; border-radius: 6px;">
+                    <a href="/item/${rec.slug}">
+                      <img src="${rec.cover_url}" alt="${rec.title}" class="card-cover" style="width: 100%; height: 220px; object-fit: cover;" loading="lazy">
+                    </a>
+                  </div>
+                  <div class="card-info" style="margin-top: 8px;">
+                    <h4 class="card-title" style="font-size: 14px; font-weight: 600; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      <a href="/item/${rec.slug}">${rec.title}</a>
+                    </h4>
+                    <div class="card-meta" style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted);">
+                      <span class="card-rating">⭐ ${(rec.rating || 0).toFixed(1)}</span>
+                      <span class="card-views"><i class="fa fa-eye"></i> ${(rec.view_count || 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              `)}
+            </div>
+          </div>
+        ` : ''}
       </div>
     </div>
 
     <!-- Sidebar Right Column -->
-    ${renderSidebar(categories, topItems)}
+    ${renderSidebar(categories, topItems, aiRecommendations)}
   `;
 
   return c.html(layout(itemQuery.title, content, 'item', '', username));
