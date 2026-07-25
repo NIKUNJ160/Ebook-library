@@ -87,6 +87,10 @@ CREATE INDEX IF NOT EXISTS idx_items_status   ON items(status);
 CREATE INDEX IF NOT EXISTS idx_files_item     ON files(item_id, page_number);
 CREATE INDEX IF NOT EXISTS idx_files_chapter  ON files(chapter_id);
 CREATE INDEX IF NOT EXISTS idx_chapters_item  ON chapters(item_id, chapter_number);
+CREATE INDEX IF NOT EXISTS idx_items_featured_views ON items(status, is_featured DESC, view_count DESC);
+CREATE INDEX IF NOT EXISTS idx_items_cat_status_created ON items(category_id, status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_items_status_views ON items(status, view_count DESC);
+
 
 -- ============================================================
 -- SEED: Categories
