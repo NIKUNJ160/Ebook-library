@@ -93,3 +93,90 @@ For each change:
 - [ ] No new function longer than 40 lines introduced
 - [ ] No new magic strings — use named constants
 - [ ] No inline styles added to HTML template strings (use CSS classes instead)
+
+## Follow-up — 2026-07-25T22:27:05Z
+
+Organize the local git commit history of the LibraryHub project into 6 isolated, PR-ready feature
+branches and push all branches to the GitHub remote at `https://github.com/NIKUNJ160/Ebook-library`.
+Each branch must be self-contained and mergeable independently — do not rewrite `main`.
+
+Working directory: `c:\NIKUNJ\programs\nikunjpateliya\nikunj`
+
+Integrity mode: development
+
+---
+
+## Context
+
+The local `main` branch has these recent commits (newest first):
+
+| SHA | Message |
+|---|---|
+| `20015f2` | feat: teamwork review — apply low/medium effort improvements |
+| `fd32a55` | security: fix all 9 audit findings (C1/C2/L2/L3/H1/H2/H3/H4/M1/M2/M4) |
+| `daf67b4` | chore: upgrade wrangler 4.67→4.112, workers-types 4→5, patch 1 high vuln |
+| `0d6c7d0` | fix: ponytail audit pass — security headers, N+1 queries, SEO, aria-labels |
+| `f9e204a` | feat: dynamic categories, base64 cover uploads, ZIP, weekly chapters, admin-cli |
+| `c51587c` | feat: NatoManga layout, DB schema, pagination, auth, dashboard CRUD, chapters |
+| `7f17cf5` | feat: seeded D1 database, Hono TS backend, natomanga scroll reader |
+| `76b6847` | feat: full natomanga.com design clone from scratch |
+
+Existing remote branches: `main`, `legacy-hono`, `nextjs-portfolio`
+
+There are 5 pending changes in `.agents/` (modified `BRIEFING.md`, `progress.md`, and new `handoff.md`).
+
+---
+
+## Requirements
+
+### R1. Commit Pending Agent Files on Main
+Stage and commit all pending `.agents/` changes on `main` before creating any branches.
+Use message: `chore: update agent briefings and progress logs`.
+Push `main` to `origin` after this commit (do not force-push).
+
+### R2. Create 6 Isolated PR-Ready Branches
+For each branch below, create it from the commit just **before** its target commit (its logical parent),
+then cherry-pick only the relevant commit(s) onto it. This makes each branch a standalone unit relative
+to what came before it, ready for a GitHub Pull Request.
+
+| Branch name | Cherry-pick SHA(s) | Base (parent) |
+|---|---|---|
+| `feature/core-library` | `76b6847`, `7f17cf5`, `c51587c` | commit before `76b6847` |
+| `feature/admin-and-uploads` | `f9e204a` | `c51587c` |
+| `fix/site-audit` | `0d6c7d0` | `f9e204a` |
+| `chore/deps-upgrade` | `daf67b4` | `0d6c7d0` |
+| `security/audit-fixes` | `fd32a55` | `daf67b4` |
+| `feature/teamwork-improvements` | `20015f2` | `fd32a55` |
+
+If cherry-pick conflicts arise for any branch, resolve them by preferring the cherry-picked content.
+
+### R3. Push All Branches to GitHub
+Push every branch from R2 to `origin`. Also ensure `origin/main` is up to date after R1.
+Do not force-push any branch that already exists on `origin`.
+
+### R4. Write and Push BRANCHES.md
+Create `BRANCHES.md` in the repo root on `main` documenting every branch: its name, purpose (1 sentence),
+base commit, and cherry-picked commit SHAs. Commit it with message `docs: add BRANCHES.md branch guide`
+and push to `origin/main`.
+
+---
+
+## Acceptance Criteria
+
+### Main is Clean
+- [ ] `git status` on `main` shows a clean working tree
+- [ ] `origin/main` includes the R1 agent-files commit
+- [ ] `origin/main` includes the R4 `BRANCHES.md` commit
+
+### All Branches Exist on GitHub
+- [ ] `git branch -r` lists all 6 feature branches on `origin`
+- [ ] Each branch contains only its cherry-picked commit(s) on top of its base
+
+### No History Rewrite on Main
+- [ ] `git log origin/main` contains all original commits in their original order
+- [ ] No force-push was used on `main`
+
+### Documentation
+- [ ] `BRANCHES.md` exists at repo root and is pushed to `origin/main`
+- [ ] Every branch is listed with name, purpose, base SHA, and cherry-picked SHAs
+
