@@ -254,6 +254,58 @@ function handleSources() {
   console.log('');
 }
 
+function printHelp() {
+  printBanner();
+  console.log(`${COLORS.bright}Usage:${COLORS.reset}`);
+  console.log(`  node fetcher-cli.js <command> [options]\n`);
+  console.log(`${COLORS.bright}Commands:${COLORS.reset}`);
+  console.log(`  ${COLORS.fgGreen}search <query> [--type=all|manga|book|novel]${COLORS.reset}   Search free sources (MangaDex, Open Library, Gutenberg)`);
+  console.log(`  ${COLORS.fgGreen}mangal <query> [--format=pdf|cbz]${COLORS.reset}             Download manga/manhwa via metafates/mangal CLI`);
+  console.log(`  ${COLORS.fgGreen}details <source> <id>${COLORS.reset}                         Fetch chapters, page images, cover art, or PDF links`);
+  console.log(`  ${COLORS.fgGreen}import <source> <id>${COLORS.reset}                          Import item directly into your D1 Library Database`);
+  console.log(`  ${COLORS.fgGreen}sources${COLORS.reset}                                       List supported free content APIs & cover servers`);
+  console.log(`  ${COLORS.fgGreen}help${COLORS.reset}                                          Show this help manual\n`);
+  console.log(`${COLORS.bright}Examples:${COLORS.reset}`);
+  console.log(`  node fetcher-cli.js search "Solo Leveling" --type=manga`);
+  console.log(`  node fetcher-cli.js mangal "Solo Leveling" --format=pdf`);
+  console.log(`  node fetcher-cli.js import gutendex 84\n`);
+}
+
+function handleMangal(query, format = 'pdf') {
+  printBanner();
+  console.log(`${COLORS.fgCyan}${COLORS.bright}🚀 Mangal CLI Integration (metafates/mangal)${COLORS.reset}\n`);
+  console.log(`Query: ${COLORS.fgYellow}"${query}"${COLORS.reset} | Target Format: ${COLORS.fgGreen}${format.toUpperCase()}${COLORS.reset}\n`);
+  
+  const execSync = require('child_process').execSync;
+  let hasMangal = false;
+  try {
+    const checkCmd = process.platform === 'win32' ? 'where mangal' : 'which mangal';
+    execSync(checkCmd, { stdio: 'ignore' });
+    hasMangal = true;
+  } catch (e) {
+    hasMangal = false;
+  }
+
+  if (hasMangal) {
+    console.log(`${COLORS.fgGreen}Found installed mangal binary! Launching download...${COLORS.reset}\n`);
+    const mangalCmd = `mangal inline --query "${query}" --format ${format}`;
+    try {
+      execSync(mangalCmd, { stdio: 'inherit' });
+    } catch (e) {
+      console.log(`${COLORS.fgRed}Mangal execution finished or interrupted.${COLORS.reset}`);
+    }
+  } else {
+    console.log(`${COLORS.fgYellow}Mangal binary is not yet installed in your system PATH.${COLORS.reset}\n`);
+    console.log(`${COLORS.bright}Install Metafates Mangal:${COLORS.reset}`);
+    console.log(`  • GitHub Repo: ${COLORS.fgBlue}https://github.com/metafates/mangal${COLORS.reset}`);
+    console.log(`  • Windows (Scoop): ${COLORS.dim}scoop bucket add mangal https://github.com/metafates/scoop-bucket && scoop install mangal${COLORS.reset}`);
+    console.log(`  • macOS (Homebrew): ${COLORS.dim}brew install metafates/tap/mangal${COLORS.reset}`);
+    console.log(`  • Go Install: ${COLORS.dim}go install github.com/metafates/mangal@latest${COLORS.reset}\n`);
+    console.log(`${COLORS.bright}Command to run after installation:${COLORS.reset}`);
+    console.log(`  ${COLORS.fgGreen}mangal inline --query "${query}" --format ${format}${COLORS.reset}\n`);
+  }
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const command = args[0] || 'help';
@@ -262,6 +314,16 @@ async function main() {
     printHelp();
   } else if (command === 'sources') {
     handleSources();
+  } else if (command === 'mangal') {
+    const query = args[1];
+    if (!query) {
+      console.log(`${COLORS.fgRed}Error: Query required. Example: node fetcher-cli.js mangal "Solo Leveling"${COLORS.reset}`);
+      return;
+    }
+    let format = 'pdf';
+    const fmtOpt = args.find(a => a.startsWith('--format='));
+    if (fmtOpt) format = fmtOpt.split('=')[1];
+    handleMangal(query, format);
   } else if (command === 'search') {
     const query = args[1];
     if (!query) {
