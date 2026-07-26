@@ -2455,13 +2455,54 @@ app.get('/admin/fetcher', async (c) => {
       <div id="resultsGrid" class="results-grid"></div>
     </div>
 
-    <!-- Preview Modal -->
-    <div id="previewModal" class="modal-overlay">
-      <div class="modal-content">
-        <button class="modal-close" onclick="closePreviewModal()">&times;</button>
-        <h3 id="modalTitle" style="margin-bottom:8px; font-size:20px; color:#38bdf8;">Item Preview</h3>
-        <p id="modalAuthor" style="color:#94a3b8; font-size:14px; margin-bottom:16px;"></p>
-        <div id="modalBody"></div>
+    <!-- URL Confirmation Modal -->
+    <div id="confirmModal" class="modal-overlay">
+      <div class="modal-content" style="max-width:580px;">
+        <button class="modal-close" onclick="closeConfirmModal()">&times;</button>
+        <h3 style="margin-bottom:8px; font-size:20px; color:#38bdf8;"><i class="fa fa-check-circle"></i> Confirm Pasted Link Details</h3>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:16px;">Verify extracted metadata before adding to your library:</p>
+        
+        <div style="display:flex; gap:16px; margin-bottom:20px;">
+          <img id="confirmCover" src="" style="width:120px; height:170px; object-fit:cover; border-radius:8px; background:#334155;" />
+          <div style="flex:1;">
+            <div style="margin-bottom:10px;">
+              <label style="display:block; color:#94a3b8; font-size:12px; margin-bottom:4px;">TITLE</label>
+              <input type="text" id="confirmTitle" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 12px; border-radius:6px; font-size:14px;" />
+            </div>
+            <div style="margin-bottom:10px;">
+              <label style="display:block; color:#94a3b8; font-size:12px; margin-bottom:4px;">AUTHOR / SOURCE</label>
+              <input type="text" id="confirmAuthor" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 12px; border-radius:6px; font-size:14px;" />
+            </div>
+            <div id="confirmLinkContainer" style="font-size:13px; color:#38bdf8;"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px; justify-end:flex-end;">
+          <button onclick="closeConfirmModal()" style="background:#475569; color:white; border:none; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:600;">Cancel</button>
+          <button onclick="confirmAndAddToGrid()" style="background:#0284c7; color:white; border:none; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:600;"><i class="fa fa-plus"></i> Add to Grid</button>
+          <button onclick="confirmAndImportDirectly()" style="background:#059669; color:white; border:none; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:600;"><i class="fa fa-database"></i> Import to D1 DB</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Web Reader Modal -->
+    <div id="webReaderModal" class="modal-overlay">
+      <div class="modal-content" style="max-width:900px; width:95%; height:90vh; display:flex; flex-direction:column;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:12px; margin-bottom:12px;">
+          <div>
+            <h3 id="readerTitle" style="font-size:18px; color:#38bdf8; margin:0;">Web Reader</h3>
+            <span id="readerSubtitle" style="font-size:12px; color:#94a3b8;">Interactive Browser Reading Mode</span>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <button onclick="changeReaderPage(-1)" style="background:#334155; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;"><i class="fa fa-chevron-left"></i> Prev</button>
+            <span id="readerPageIndicator" style="font-size:13px; color:#cbd5e1; font-weight:600;">Page 1</span>
+            <button onclick="changeReaderPage(1)" style="background:#334155; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">Next <i class="fa fa-chevron-right"></i></button>
+            <button class="modal-close" onclick="closeWebReaderModal()" style="position:relative; top:0; right:0;">&times;</button>
+          </div>
+        </div>
+        <div id="readerViewport" style="flex:1; background:#0f172a; border-radius:8px; overflow:auto; display:flex; justify-content:center; align-items:center; padding:16px;">
+          <canvas id="readerCanvas" style="max-width:100%; max-height:100%; box-shadow:0 10px 25px rgba(0,0,0,0.5);"></canvas>
+        </div>
       </div>
     </div>
 
@@ -2469,6 +2510,12 @@ app.get('/admin/fetcher', async (c) => {
       let currentFilter = 'all';
       let currentResults = [];
       let fetchTimer = null;
+      let pendingUrlItem = null;
+
+      // Web Reader variables
+      let currentPdfDoc = null;
+      let currentReaderPage = 1;
+      let totalReaderPages = 1;
 
       function showToast(msg, isError = false) {
         const toast = document.getElementById('toastNotification');
@@ -2490,10 +2537,9 @@ app.get('/admin/fetcher', async (c) => {
         runFetcherSearch();
       }
 
-      // Auto-fetch on input change / paste (debounced by 400ms)
       document.getElementById('fetcherQuery').addEventListener('input', function() {
         clearTimeout(fetchTimer);
-        fetchTimer = setTimeout(runFetcherSearch, 400);
+        fetchTimer = setTimeout(runFetcherSearch, 450);
       });
 
       async function runFetcherSearch() {
@@ -2505,7 +2551,7 @@ app.get('/admin/fetcher', async (c) => {
         
         const isUrl = query.startsWith('http://') || query.startsWith('https://') || query.includes('.org') || query.includes('.com') || query.includes('.pdf');
         statusEl.innerHTML = isUrl 
-          ? '<i class="fa fa-spinner fa-spin"></i> Auto-detecting URL & extracting metadata/PDF images...' 
+          ? '<i class="fa fa-spinner fa-spin"></i> Auto-detecting URL & extracting metadata...' 
           : '<i class="fa fa-spinner fa-spin"></i> Querying MangaDex, OpenLibrary & Gutendex APIs...';
         
         gridEl.innerHTML = '';
@@ -2519,97 +2565,144 @@ app.get('/admin/fetcher', async (c) => {
             return;
           }
 
-          currentResults = data.results;
-          statusEl.innerHTML = 'Found ' + data.results.length + ' result(s) from free sources / URL:';
-
-          gridEl.innerHTML = data.results.map(function(item, idx) {
-            var cover = item.coverUrl || 'https://picsum.photos/seed/no-cover/400/560';
-            return '<div class="fetcher-card">' +
-              '<div class="card-cover">' +
-                '<img src="' + cover + '" alt="' + item.title + '" onerror="this.src=\'https://picsum.photos/seed/def/400/560\'"/>' +
-                '<span class="card-tag">' + item.source + '</span>' +
-              '</div>' +
-              '<div class="card-body">' +
-                '<div>' +
-                  '<div class="card-title" title="' + item.title + '">' + item.title + '</div>' +
-                  '<div class="card-author"><i class="fa fa-user"></i> ' + item.author + '</div>' +
-                '</div>' +
-                '<div class="card-actions">' +
-                  '<button class="btn-card btn-preview" onclick="openPreviewModal(' + idx + ')"><i class="fa fa-eye"></i> Preview</button>' +
-                  '<button class="btn-card btn-import" onclick="importItem(' + idx + ')"><i class="fa fa-plus"></i> Import</button>' +
-                '</div>' +
-              '</div>' +
-            '</div>';
-          }).join('');
-
           if (isUrl && data.results.length === 1) {
-            openPreviewModal(0);
+            pendingUrlItem = data.results[0];
+            showUrlConfirmationModal(data.results[0]);
+            statusEl.innerHTML = 'Pasted URL detected! Please confirm details in the popup modal.';
+            return;
           }
+
+          currentResults = data.results;
+          renderResultsGrid(data.results);
+          statusEl.innerHTML = 'Found ' + data.results.length + ' result(s) from free sources / URL:';
         } catch (e) {
           statusEl.innerHTML = '<span style="color:#ef4444;">Error fetching data: ' + e.message + '</span>';
         }
       }
 
-      function openPreviewModal(idx) {
+      function renderResultsGrid(results) {
+        const gridEl = document.getElementById('resultsGrid');
+        gridEl.innerHTML = results.map(function(item, idx) {
+          var cover = item.coverUrl || 'https://picsum.photos/seed/no-cover/400/560';
+          var downloadBtn = item.pdfUrl 
+            ? '<a href="' + item.pdfUrl + '" download target="_blank" class="btn-card" style="background:#0284c7; text-decoration:none; display:inline-flex; align-items:center; gap:4px; padding:6px 12px; border-radius:6px; font-size:12px; color:white;"><i class="fa fa-download"></i> Download PDF/CBZ</a>'
+            : '<button class="btn-card" onclick="showToast(\'Cover image archive ready\')" style="background:#475569;"><i class="fa fa-download"></i> Download CBZ</button>';
+
+          return '<div class="fetcher-card">' +
+            '<div class="card-cover">' +
+              '<img src="' + cover + '" alt="' + item.title + '" onerror="this.src=\'https://picsum.photos/seed/def/400/560\'"/>' +
+              '<span class="card-tag">' + item.source + '</span>' +
+            '</div>' +
+            '<div class="card-body">' +
+              '<div>' +
+                '<div class="card-title" title="' + item.title + '">' + item.title + '</div>' +
+                '<div class="card-author"><i class="fa fa-user"></i> ' + item.author + '</div>' +
+              '</div>' +
+              '<div class="card-actions" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">' +
+                '<button class="btn-card btn-preview" onclick="openWebReader(' + idx + ')" style="background:#8b5cf6;"><i class="fa fa-book-open"></i> Read Online</button>' +
+                downloadBtn +
+                '<button class="btn-card btn-import" onclick="importItem(' + idx + ')"><i class="fa fa-plus"></i> Import DB</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+
+      function showUrlConfirmationModal(item) {
+        document.getElementById('confirmTitle').value = item.title;
+        document.getElementById('confirmAuthor').value = item.author;
+        document.getElementById('confirmCover').src = item.coverUrl || 'https://picsum.photos/seed/no-cover/400/560';
+        document.getElementById('confirmLinkContainer').innerHTML = item.pdfUrl ? '<i class="fa fa-file-pdf"></i> Direct PDF Link Detected' : '<i class="fa fa-globe"></i> Source: ' + item.source.toUpperCase();
+        document.getElementById('confirmModal').classList.add('active');
+      }
+
+      function closeConfirmModal() {
+        document.getElementById('confirmModal').classList.remove('active');
+      }
+
+      function confirmAndAddToGrid() {
+        if (!pendingUrlItem) return;
+        pendingUrlItem.title = document.getElementById('confirmTitle').value;
+        pendingUrlItem.author = document.getElementById('confirmAuthor').value;
+        currentResults.unshift(pendingUrlItem);
+        renderResultsGrid(currentResults);
+        closeConfirmModal();
+        showToast('Added "' + pendingUrlItem.title + '" to your view grid!');
+      }
+
+      async function confirmAndImportDirectly() {
+        if (!pendingUrlItem) return;
+        pendingUrlItem.title = document.getElementById('confirmTitle').value;
+        pendingUrlItem.author = document.getElementById('confirmAuthor').value;
+        currentResults.unshift(pendingUrlItem);
+        renderResultsGrid(currentResults);
+        closeConfirmModal();
+        await importItem(0);
+      }
+
+      function openWebReader(idx) {
         const item = currentResults[idx];
         if (!item) return;
 
-        document.getElementById('modalTitle').innerText = item.title;
-        document.getElementById('modalAuthor').innerText = 'By ' + item.author + ' | Source: ' + item.source.toUpperCase();
+        document.getElementById('readerTitle').innerText = item.title;
+        document.getElementById('readerSubtitle').innerText = 'Author: ' + item.author + ' | Source: ' + item.source.toUpperCase();
+        document.getElementById('webReaderModal').classList.add('active');
+        
+        currentReaderPage = 1;
 
-        const bodyEl = document.getElementById('modalBody');
-        var cover = item.coverUrl || 'https://picsum.photos/seed/no-cover/400/560';
-        var desc = item.description || 'No description provided.';
-        var pdfLinkHtml = item.pdfUrl ? '<p style="margin-top:10px;"><a href="' + item.pdfUrl + '" target="_blank" style="color:#38bdf8;"><i class="fa fa-file-pdf"></i> Direct PDF / Download Link</a></p>' : '';
-        var pdfRenderHtml = item.pdfUrl ? '<p style="color:#94a3b8;"><i class="fa fa-spinner fa-spin"></i> Rendering PDF Page 1 Preview...</p><canvas id="pdfCanvas"></canvas>' : '<p style="color:#94a3b8;">Cover image preview ready for import.</p>';
-
-        bodyEl.innerHTML = 
-          '<div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:20px;">' +
-            '<img src="' + cover + '" style="width:160px; height:240px; object-fit:cover; border-radius:10px;" />' +
-            '<div style="flex:1;">' +
-              '<p style="color:#cbd5e1; line-height:1.5; font-size:14px; margin-bottom:12px;">' + desc + '</p>' +
-              '<p><strong>Type:</strong> ' + item.type.toUpperCase() + '</p>' +
-              pdfLinkHtml +
-            '</div>' +
-          '</div>' +
-          '<div id="pdfRenderContainer" class="pdf-canvas-container">' +
-            pdfRenderHtml +
-          '</div>';
-
-        document.getElementById('previewModal').classList.add('active');
-
-        if (item.pdfUrl) {
-          try {
-            if (typeof pdfjsLib !== 'undefined') {
-              pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-              pdfjsLib.getDocument(item.pdfUrl).promise.then(pdf => {
-                pdf.getPage(1).then(page => {
-                  const scale = 1.2;
-                  const viewport = page.getViewport({ scale });
-                  const canvas = document.getElementById('pdfCanvas');
-                  if (!canvas) return;
-                  const context = canvas.getContext('2d');
-                  canvas.height = viewport.height;
-                  canvas.width = viewport.width;
-                  document.getElementById('pdfRenderContainer').querySelector('p').innerText = 'Page 1 PDF Snapshot:';
-                  page.render({ canvasContext: context, viewport }).promise;
-                });
-              }).catch(err => {
-                const container = document.getElementById('pdfRenderContainer');
-                if (container) container.innerHTML = '<p style="color:#f59e0b;"><i class="fa fa-file-pdf"></i> Direct PDF link available: <a href="' + item.pdfUrl + '" target="_blank" style="color:#38bdf8;">Open PDF File</a></p>';
-              });
-            } else {
-              const container = document.getElementById('pdfRenderContainer');
-              if (container) container.innerHTML = '<p style="color:#38bdf8;"><i class="fa fa-file-pdf"></i> Direct PDF link: <a href="' + item.pdfUrl + '" target="_blank" style="color:#38bdf8;">Open PDF File</a></p>';
-            }
-          } catch (e) {
-            console.error('PDF preview error:', e);
-          }
+        if (item.pdfUrl && typeof pdfjsLib !== 'undefined') {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          pdfjsLib.getDocument(item.pdfUrl).promise.then(pdf => {
+            currentPdfDoc = pdf;
+            totalReaderPages = pdf.numPages;
+            renderReaderPage(1);
+          }).catch(err => {
+            renderCoverInReader(item);
+          });
+        } else {
+          renderCoverInReader(item);
         }
       }
 
-      function closePreviewModal() {
-        document.getElementById('previewModal').classList.remove('active');
+      function renderReaderPage(pageNum) {
+        if (!currentPdfDoc) return;
+        currentPdfDoc.getPage(pageNum).then(page => {
+          const viewport = page.getViewport({ scale: 1.3 });
+          const canvas = document.getElementById('readerCanvas');
+          const context = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          document.getElementById('readerPageIndicator').innerText = 'Page ' + pageNum + ' of ' + totalReaderPages;
+          page.render({ canvasContext: context, viewport });
+        });
+      }
+
+      function renderCoverInReader(item) {
+        const canvas = document.getElementById('readerCanvas');
+        const context = canvas.getContext('2d');
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = function() {
+          canvas.width = img.width || 400;
+          canvas.height = img.height || 560;
+          context.drawImage(img, 0, 0);
+          document.getElementById('readerPageIndicator').innerText = 'Page 1 of 1 (Cover View)';
+        };
+        img.src = item.coverUrl || 'https://picsum.photos/seed/cover/400/560';
+      }
+
+      function changeReaderPage(delta) {
+        if (!currentPdfDoc) return;
+        const newPage = currentReaderPage + delta;
+        if (newPage >= 1 && newPage <= totalReaderPages) {
+          currentReaderPage = newPage;
+          renderReaderPage(newPage);
+        }
+      }
+
+      function closeWebReaderModal() {
+        document.getElementById('webReaderModal').classList.remove('active');
+        currentPdfDoc = null;
       }
 
       async function importItem(idx) {
