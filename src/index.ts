@@ -2837,6 +2837,7 @@ app.get('/api/fetcher/search', async (c) => {
                 title,
                 type: 'manga',
                 coverUrl,
+                pdfUrl: coverUrl,
                 author: 'MangaDex Scanlations',
                 description: desc.substring(0, 200) + '...'
               });
@@ -2865,9 +2866,9 @@ app.get('/api/fetcher/search', async (c) => {
               title: doc.title || 'Open Library Ebook',
               type: 'pdf',
               coverUrl,
+              pdfUrl: coverUrl,
               author: 'Open Library Classic',
               description: typeof doc.description === 'string' ? doc.description.substring(0, 200) : 'Open Library Classic Work',
-              pdfUrl: query
             });
           }
         } catch (e) {
@@ -2935,6 +2936,7 @@ app.get('/api/fetcher/search', async (c) => {
               title,
               type: 'manga',
               coverUrl,
+              pdfUrl: coverUrl,
               author: 'MangaDex Scanlations',
               description: desc.substring(0, 180) + '...'
             };
