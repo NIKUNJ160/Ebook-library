@@ -2429,6 +2429,8 @@ app.get('/admin/fetcher', async (c) => {
 
         <div class="sample-chips">
           <span class="sample-label">Quick Demos:</span>
+          <span class="sample-chip" onclick="setQuery('Moby Dick')">⚡ Moby Dick (Classic)</span>
+          <span class="sample-chip" onclick="setQuery('Pride and Prejudice')">⚡ Pride & Prejudice</span>
           <span class="sample-chip" onclick="setQuery('Frankenstein')">⚡ Frankenstein (Book)</span>
           <span class="sample-chip" onclick="setQuery('Solo Leveling')">⚡ Solo Leveling (Manga)</span>
           <span class="sample-chip" onclick="setQuery('Dracula')">⚡ Dracula (PDF Ebook)</span>
@@ -2979,18 +2981,26 @@ app.get('/api/fetcher/search', async (c) => {
         headers: { 'User-Agent': 'LibraryHub-Fetcher/1.0' }
       }).then(r => r.ok ? r.json() : null).then((data: any) => {
         if (data && data.results) {
-          return data.results.slice(0, 5).map((b: any) => {
+          return data.results.slice(0, 10).map((b: any) => {
             const coverUrl = b.formats['image/jpeg'] || '';
-            const pdfUrl = b.formats['application/pdf'] || b.formats['application/epub+zip'] || '';
-            const author = b.authors ? b.authors.map((a: any) => a.name).join(', ') : 'Public Domain';
+            const pdfUrl = b.formats['application/epub+zip'] || b.formats['text/html'] || b.formats['text/plain; charset=utf-8'] || coverUrl;
+            const author = b.authors ? b.authors.map((a: any) => {
+              if (a.name.includes(', ')) {
+                const parts = a.name.split(', ');
+                return parts[1] + ' ' + parts[0];
+              }
+              return a.name;
+            }).join(', ') : 'Public Domain Author';
+            const desc = (b.summaries && b.summaries[0]) ? b.summaries[0] : `Project Gutenberg #${b.id}. Downloads: ${b.download_count ? b.download_count.toLocaleString() : 'N/A'}`;
+
             return {
               id: String(b.id),
               source: 'Gutendex',
               title: b.title,
-              type: 'pdf',
+              type: 'book',
               coverUrl,
               author,
-              description: `Project Gutenberg ID #${b.id}. Download count: ${b.download_count}`,
+              description: desc.substring(0, 220) + '...',
               pdfUrl
             };
           });
