@@ -2585,7 +2585,10 @@ app.get('/admin/fetcher', async (c) => {
         gridEl.innerHTML = results.map(function(item, idx) {
           var cover = item.coverUrl || 'https://picsum.photos/seed/no-cover/400/560';
           var targetDownloadUrl = item.pdfUrl || item.coverUrl || item.id;
-          var downloadBtn = '<a href="' + targetDownloadUrl + '" download target="_blank" class="btn-card" style="background:#0284c7; text-decoration:none; display:inline-flex; align-items:center; gap:4px; padding:6px 12px; border-radius:6px; font-size:12px; color:white;"><i class="fa fa-download"></i> Download ' + (item.pdfUrl ? 'PDF' : 'Resource') + '</a>';
+          var safeFilename = item.title.replace(/[^a-zA-Z0-9]+/g, '_') + (item.pdfUrl ? '.pdf' : '.jpg');
+          var downloadProxyUrl = '/api/fetcher/download?url=' + encodeURIComponent(targetDownloadUrl) + '&filename=' + encodeURIComponent(safeFilename);
+          
+          var downloadBtn = '<a href="' + downloadProxyUrl + '" target="_blank" class="btn-card" style="background:#0284c7; text-decoration:none; display:inline-flex; align-items:center; gap:4px; padding:6px 12px; border-radius:6px; font-size:12px; color:white;"><i class="fa fa-download"></i> Download File</a>';
 
           return '<div class="fetcher-card">' +
             '<div class="card-cover">' +
@@ -2746,6 +2749,43 @@ app.get('/admin/fetcher', async (c) => {
   `;
 
   return c.html(adminLayout('Content Fetcher & PDF Previewer', content, 'fetcher'));
+});
+
+// ==========================================
+// FETCHER BACKEND DIRECT FILE DOWNLOAD PROXY
+// ==========================================
+app.get('/api/fetcher/download', async (c) => {
+  const fileUrl = c.req.query('url');
+  if (!fileUrl) return c.text('URL parameter missing', 400);
+
+  try {
+    const headRes = await fetch(fileUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+
+    if (!headRes.ok) {
+      return c.text('Source file fetch failed with status: ' + headRes.status, 500);
+    }
+
+    const contentType = headRes.headers.get('content-type') || 'application/octet-stream';
+    let filename = c.req.query('filename') || fileUrl.split('/').pop() || 'downloaded_file';
+    if (!filename.includes('.')) {
+      filename += '.pdf';
+    }
+
+    return new Response(headRes.body, {
+      status: 200,
+      headers: {
+        'Content-Type': contentType,
+        'Content-Disposition': 'attachment; filename="' + filename + '"',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  } catch (e: any) {
+    return c.text('Download proxy error: ' + e.message, 500);
+  }
 });
 
 // ==========================================
