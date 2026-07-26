@@ -14,6 +14,7 @@ database_id = "79929b7e-e5e1-412b-a231-a2bb210b759f"
 ALLOW_REGISTRATION = "true"
 INVITE_CODE = "nikunj2024"
 JWT_SECRET_KEY = "local-dev-secret-change-in-production"
+MANGADEX_CLIENT_ID = "personal-client-a696d7fa-4055-44c8-93fc-d1e47accfd1e-aa70e5aa"
 
 [ai]
 binding = "AI"

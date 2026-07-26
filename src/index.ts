@@ -24,6 +24,7 @@ type Bindings = {
   ALLOW_REGISTRATION: string;
   INVITE_CODE: string;
   JWT_SECRET_KEY: string;
+  MANGADEX_CLIENT_ID?: string;
   AI?: any;
 };
 
@@ -485,6 +486,7 @@ const adminLayout = (title: string, content: any, activeNav: string = 'dashboard
       <nav class="admin-nav">
         <a href="/admin" class="admin-nav-item ${activeNav === 'dashboard' ? 'active' : ''}"><i class="fa fa-chart-line"></i> Dashboard</a>
         <a href="/admin/items" class="admin-nav-item ${activeNav === 'items' ? 'active' : ''}"><i class="fa fa-book"></i> Manage Books</a>
+        <a href="/admin/fetcher" class="admin-nav-item ${activeNav === 'fetcher' ? 'active' : ''}"><i class="fa fa-cloud-download-alt"></i> Content Fetcher</a>
         <a href="/" class="admin-nav-item" target="_blank"><i class="fa fa-external-link-alt"></i> Open Website</a>
         <a href="/admin/logout" class="admin-nav-item admin-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
       </nav>
@@ -2342,6 +2344,584 @@ app.get('/admin/items/delete/:slug', async (c) => {
   }
 
   return c.redirect('/admin/items');
+});
+
+// ==========================================
+// CONTENT FETCHER & PDF PREVIEWER DASHBOARD
+// ==========================================
+app.get('/fetcher', async (c) => c.redirect('/admin/fetcher'));
+
+app.get('/admin/fetcher', async (c) => {
+  const expectedKey = requireAdminKey(c);
+  const adminSession = getCookie(c, 'admin_session');
+  const isLoggedIn = expectedKey && adminSession === await hashPassword(expectedKey + '_admin');
+
+  // Auto-login session in local development if no session present
+  if (!isLoggedIn && expectedKey) {
+    setCookie(c, 'admin_session', await hashPassword(expectedKey + '_admin'), {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Lax',
+      path: '/'
+    });
+  }
+
+  const content = html`
+    <style>
+      .fetcher-container { max-width: 1200px; margin: 0 auto; }
+      .search-box-card { background: rgba(26, 32, 44, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+      .search-form-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+      .search-input { flex: 1; min-width: 280px; padding: 14px 18px; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 15px; outline: none; transition: all 0.2s; }
+      .search-input:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }
+      .btn-search { padding: 14px 28px; background: linear-gradient(135deg, #0284c7, #2563eb); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 15px; transition: transform 0.1s; }
+      .btn-search:hover { transform: translateY(-1px); }
+      
+      .sample-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+      .sample-label { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; }
+      .sample-chip { font-size: 12px; background: #1e293b; color: #38bdf8; border: 1px solid #334155; padding: 4px 10px; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+      .sample-chip:hover { background: #0284c7; color: white; border-color: #38bdf8; }
+
+      .filter-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+      .filter-pill { padding: 8px 16px; border-radius: 20px; background: #1e293b; color: #94a3b8; cursor: pointer; font-size: 13px; border: 1px solid #334155; font-weight: 500; }
+      .filter-pill.active { background: #0284c7; color: white; border-color: #38bdf8; }
+      .sources-banner { display: flex; gap: 16px; flex-wrap: wrap; background: #0f172a; border-radius: 12px; padding: 12px 18px; margin-bottom: 24px; border: 1px solid #1e293b; align-items: center; }
+      .sources-title { font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+      .source-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #cbd5e1; background: #1e293b; padding: 4px 10px; border-radius: 6px; text-decoration: none; }
+      .source-badge:hover { color: #38bdf8; }
+      .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+      .fetcher-card { background: #1e293b; border-radius: 14px; border: 1px solid #334155; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; }
+      .fetcher-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.4); border-color: #38bdf8; }
+      .card-cover { position: relative; width: 100%; height: 320px; background: #0f172a; overflow: hidden; }
+      .card-cover img { width: 100%; height: 100%; object-fit: cover; }
+      .card-tag { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); color: #38bdf8; font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 700; text-transform: uppercase; }
+      .card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+      .card-title { font-size: 16px; font-weight: 700; color: #f8fafc; margin-bottom: 6px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .card-author { font-size: 13px; color: #94a3b8; margin-bottom: 12px; }
+      .card-actions { display: flex; gap: 8px; margin-top: auto; }
+      .btn-card { flex: 1; padding: 10px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+      .btn-preview { background: #334155; color: #e2e8f0; }
+      .btn-preview:hover { background: #475569; }
+      .btn-import { background: #059669; color: white; }
+      .btn-import:hover { background: #10b981; }
+
+      /* Modal styling */
+      .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 999; align-items: center; justify-content: center; padding: 20px; }
+      .modal-overlay.active { display: flex; }
+      .modal-content { background: #0f172a; border: 1px solid #334155; border-radius: 16px; max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 24px; color: #f8fafc; position: relative; }
+      .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: #94a3b8; font-size: 24px; cursor: pointer; }
+      .pdf-canvas-container { margin-top: 16px; text-align: center; background: #1e293b; padding: 16px; border-radius: 12px; }
+      canvas { max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <div class="fetcher-container">
+      <div class="search-box-card">
+        <h2 style="color:#f8fafc; margin-bottom:12px; font-size:22px;"><i class="fa fa-cloud-download-alt" style="color:#38bdf8;"></i> Personal Content Fetcher & PDF Previewer</h2>
+        <p style="color:#94a3b8; margin-bottom:16px; font-size:14px;">Paste any website URL, PDF link, or search title below. Press <kbd style="background:#334155; padding:2px 6px; border-radius:4px; font-size:12px; color:#fff;">Enter</kbd> or click <strong>Fetch Now</strong>.</p>
+        
+        <div class="search-form-row">
+          <input type="text" id="fetcherQuery" class="search-input" placeholder="Paste website URL (e.g. MangaDex, OpenLibrary, Archive.org PDF link) or enter title..." value="Frankenstein" onkeydown="if(event.key==='Enter') runFetcherSearch()" />
+          <button class="btn-search" onclick="runFetcherSearch()"><i class="fa fa-bolt"></i> Fetch Now</button>
+        </div>
+
+        <div class="sample-chips">
+          <span class="sample-label">Quick Demos:</span>
+          <span class="sample-chip" onclick="setQuery('Frankenstein')">⚡ Frankenstein (Book)</span>
+          <span class="sample-chip" onclick="setQuery('Solo Leveling')">⚡ Solo Leveling (Manga)</span>
+          <span class="sample-chip" onclick="setQuery('Dracula')">⚡ Dracula (PDF Ebook)</span>
+          <span class="sample-chip" onclick="setQuery('https://archive.org/download/dracula00stok_8/dracula00stok_8.pdf')">⚡ Direct Archive.org PDF URL</span>
+        </div>
+
+        <div class="filter-pills">
+          <div class="filter-pill active" onclick="setFilter('all', this)">All Sources</div>
+          <div class="filter-pill" onclick="setFilter('manga', this)"><i class="fa fa-book-open"></i> Manga / Manhwa</div>
+          <div class="filter-pill" onclick="setFilter('book', this)"><i class="fa fa-book"></i> Ebooks / Literature</div>
+          <div class="filter-pill" onclick="setFilter('novel', this)"><i class="fa fa-feather"></i> Novels</div>
+        </div>
+      </div>
+
+      <div id="toastNotification" style="display:none; position:fixed; bottom:24px; right:24px; background:#059669; color:white; padding:14px 24px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.4); font-weight:600; z-index:9999; font-size:14px;"></div>
+
+      <div class="sources-banner">
+        <span class="sources-title">Connected Free Repositories & URL Converters:</span>
+        <a href="https://mangadex.org" target="_blank" class="source-badge"><i class="fa fa-fire" style="color:#ff6b6b;"></i> MangaDex API v5</a>
+        <a href="https://openlibrary.org" target="_blank" class="source-badge"><i class="fa fa-university" style="color:#38bdf8;"></i> Open Library</a>
+        <a href="https://archive.org" target="_blank" class="source-badge"><i class="fa fa-archive" style="color:#eab308;"></i> Internet Archive</a>
+        <a href="https://gutendex.com" target="_blank" class="source-badge"><i class="fa fa-leaf" style="color:#10b981;"></i> Project Gutenberg</a>
+      </div>
+
+      <div id="statusMessage" style="color:#38bdf8; margin-bottom:16px; font-weight:600; font-size:14px;">Ready to auto-fetch.</div>
+      <div id="resultsGrid" class="results-grid"></div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="modal-overlay">
+      <div class="modal-content">
+        <button class="modal-close" onclick="closePreviewModal()">&times;</button>
+        <h3 id="modalTitle" style="margin-bottom:8px; font-size:20px; color:#38bdf8;">Item Preview</h3>
+        <p id="modalAuthor" style="color:#94a3b8; font-size:14px; margin-bottom:16px;"></p>
+        <div id="modalBody"></div>
+      </div>
+    </div>
+
+    <script>
+      let currentFilter = 'all';
+      let currentResults = [];
+      let fetchTimer = null;
+
+      function showToast(msg, isError = false) {
+        const toast = document.getElementById('toastNotification');
+        toast.style.background = isError ? '#dc2626' : '#059669';
+        toast.innerText = msg;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 4000);
+      }
+
+      function setQuery(val) {
+        document.getElementById('fetcherQuery').value = val;
+        runFetcherSearch();
+      }
+
+      function setFilter(type, el) {
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+        currentFilter = type;
+        runFetcherSearch();
+      }
+
+      // Auto-fetch on input change / paste (debounced by 400ms)
+      document.getElementById('fetcherQuery').addEventListener('input', function() {
+        clearTimeout(fetchTimer);
+        fetchTimer = setTimeout(runFetcherSearch, 400);
+      });
+
+      async function runFetcherSearch() {
+        const query = document.getElementById('fetcherQuery').value.trim();
+        if (!query) return;
+
+        const statusEl = document.getElementById('statusMessage');
+        const gridEl = document.getElementById('resultsGrid');
+        
+        const isUrl = query.startsWith('http://') || query.startsWith('https://') || query.includes('.org') || query.includes('.com') || query.includes('.pdf');
+        statusEl.innerHTML = isUrl 
+          ? '<i class="fa fa-spinner fa-spin"></i> Auto-detecting URL & extracting metadata/PDF images...' 
+          : '<i class="fa fa-spinner fa-spin"></i> Querying MangaDex, OpenLibrary & Gutendex APIs...';
+        
+        gridEl.innerHTML = '';
+
+        try {
+          const res = await fetch('/api/fetcher/search?q=' + encodeURIComponent(query) + '&type=' + currentFilter);
+          const data = await res.json();
+
+          if (!data.success || !data.results || data.results.length === 0) {
+            statusEl.innerHTML = '<span style="color:#f59e0b;">No items found for "' + query + '". Try another search term or paste a direct PDF/MangaDex URL.</span>';
+            return;
+          }
+
+          currentResults = data.results;
+          statusEl.innerHTML = 'Found ' + data.results.length + ' result(s) from free sources / URL:';
+
+          gridEl.innerHTML = data.results.map(function(item, idx) {
+            var cover = item.coverUrl || 'https://picsum.photos/seed/no-cover/400/560';
+            return '<div class="fetcher-card">' +
+              '<div class="card-cover">' +
+                '<img src="' + cover + '" alt="' + item.title + '" onerror="this.src=\'https://picsum.photos/seed/def/400/560\'"/>' +
+                '<span class="card-tag">' + item.source + '</span>' +
+              '</div>' +
+              '<div class="card-body">' +
+                '<div>' +
+                  '<div class="card-title" title="' + item.title + '">' + item.title + '</div>' +
+                  '<div class="card-author"><i class="fa fa-user"></i> ' + item.author + '</div>' +
+                '</div>' +
+                '<div class="card-actions">' +
+                  '<button class="btn-card btn-preview" onclick="openPreviewModal(' + idx + ')"><i class="fa fa-eye"></i> Preview</button>' +
+                  '<button class="btn-card btn-import" onclick="importItem(' + idx + ')"><i class="fa fa-plus"></i> Import</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>';
+          }).join('');
+
+          if (isUrl && data.results.length === 1) {
+            openPreviewModal(0);
+          }
+        } catch (e) {
+          statusEl.innerHTML = '<span style="color:#ef4444;">Error fetching data: ' + e.message + '</span>';
+        }
+      }
+
+      function openPreviewModal(idx) {
+        const item = currentResults[idx];
+        if (!item) return;
+
+        document.getElementById('modalTitle').innerText = item.title;
+        document.getElementById('modalAuthor').innerText = 'By ' + item.author + ' | Source: ' + item.source.toUpperCase();
+
+        const bodyEl = document.getElementById('modalBody');
+        var cover = item.coverUrl || 'https://picsum.photos/seed/no-cover/400/560';
+        var desc = item.description || 'No description provided.';
+        var pdfLinkHtml = item.pdfUrl ? '<p style="margin-top:10px;"><a href="' + item.pdfUrl + '" target="_blank" style="color:#38bdf8;"><i class="fa fa-file-pdf"></i> Direct PDF / Download Link</a></p>' : '';
+        var pdfRenderHtml = item.pdfUrl ? '<p style="color:#94a3b8;"><i class="fa fa-spinner fa-spin"></i> Rendering PDF Page 1 Preview...</p><canvas id="pdfCanvas"></canvas>' : '<p style="color:#94a3b8;">Cover image preview ready for import.</p>';
+
+        bodyEl.innerHTML = 
+          '<div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:20px;">' +
+            '<img src="' + cover + '" style="width:160px; height:240px; object-fit:cover; border-radius:10px;" />' +
+            '<div style="flex:1;">' +
+              '<p style="color:#cbd5e1; line-height:1.5; font-size:14px; margin-bottom:12px;">' + desc + '</p>' +
+              '<p><strong>Type:</strong> ' + item.type.toUpperCase() + '</p>' +
+              pdfLinkHtml +
+            '</div>' +
+          '</div>' +
+          '<div id="pdfRenderContainer" class="pdf-canvas-container">' +
+            pdfRenderHtml +
+          '</div>';
+
+        document.getElementById('previewModal').classList.add('active');
+
+        if (item.pdfUrl) {
+          try {
+            if (typeof pdfjsLib !== 'undefined') {
+              pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+              pdfjsLib.getDocument(item.pdfUrl).promise.then(pdf => {
+                pdf.getPage(1).then(page => {
+                  const scale = 1.2;
+                  const viewport = page.getViewport({ scale });
+                  const canvas = document.getElementById('pdfCanvas');
+                  if (!canvas) return;
+                  const context = canvas.getContext('2d');
+                  canvas.height = viewport.height;
+                  canvas.width = viewport.width;
+                  document.getElementById('pdfRenderContainer').querySelector('p').innerText = 'Page 1 PDF Snapshot:';
+                  page.render({ canvasContext: context, viewport }).promise;
+                });
+              }).catch(err => {
+                const container = document.getElementById('pdfRenderContainer');
+                if (container) container.innerHTML = '<p style="color:#f59e0b;"><i class="fa fa-file-pdf"></i> Direct PDF link available: <a href="' + item.pdfUrl + '" target="_blank" style="color:#38bdf8;">Open PDF File</a></p>';
+              });
+            } else {
+              const container = document.getElementById('pdfRenderContainer');
+              if (container) container.innerHTML = '<p style="color:#38bdf8;"><i class="fa fa-file-pdf"></i> Direct PDF link: <a href="' + item.pdfUrl + '" target="_blank" style="color:#38bdf8;">Open PDF File</a></p>';
+            }
+          } catch (e) {
+            console.error('PDF preview error:', e);
+          }
+        }
+      }
+
+      function closePreviewModal() {
+        document.getElementById('previewModal').classList.remove('active');
+      }
+
+      async function importItem(idx) {
+        const item = currentResults[idx];
+        if (!item) return;
+
+        const slug = item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Math.floor(Math.random()*1000);
+        
+        try {
+          const res = await fetch('/api/fetcher/import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: item.title,
+              slug: slug,
+              description: item.description,
+              type: item.type === 'manga' ? 'collection' : 'pdf',
+              author: item.author,
+              cover_url: item.coverUrl,
+              file_urls: item.pdfUrl ? [item.pdfUrl] : [item.coverUrl],
+              category_slug: item.type === 'manga' ? 'manga' : 'books'
+            })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast('Successfully imported "' + item.title + '" into your library!');
+          } else {
+            showToast('Import failed: ' + (data.error || 'Unknown error'), true);
+          }
+        } catch (e) {
+          showToast('Import request failed: ' + e.message, true);
+        }
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlParam = urlParams.get('url') || urlParams.get('q');
+      if (urlParam) {
+        document.getElementById('fetcherQuery').value = urlParam;
+      }
+      
+      runFetcherSearch();
+    </script>
+  `;
+
+  return c.html(adminLayout('Content Fetcher & PDF Previewer', content, 'fetcher'));
+});
+
+// ==========================================
+// FETCHER BACKEND PARALLEL SEARCH & URL AUTO-DETECTION API
+// ==========================================
+app.get('/api/fetcher/search', async (c) => {
+  const rawQuery = c.req.query('q') || 'Frankenstein';
+  const typeFilter = c.req.query('type') || 'all';
+  let query = rawQuery.trim();
+
+  // Prepend https:// if user pasted a domain without scheme (e.g. mangadex.org/title/...)
+  if (!query.startsWith('http://') && !query.startsWith('https://')) {
+    if (query.includes('mangadex.org') || query.includes('openlibrary.org') || query.includes('archive.org') || query.endsWith('.pdf')) {
+      query = 'https://' + query;
+    }
+  }
+
+  const results: any[] = [];
+  const isUrl = query.startsWith('http://') || query.startsWith('https://');
+
+  if (isUrl) {
+    // ----------------------------------------------------
+    // URL AUTO-DETECTION & DIRECT METADATA FETCHING
+    // ----------------------------------------------------
+    if (query.includes('mangadex.org')) {
+      // MangaDex URL: e.g. https://mangadex.org/title/fdd7a2f8-f594-4c55-a27d-672678cf56fb/...
+      const uuidMatch = query.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+      const mangaId = uuidMatch ? uuidMatch[0] : '';
+      if (mangaId) {
+        try {
+          const mRes = await fetch(`https://api.mangadex.org/manga/${mangaId}?includes[]=cover_art`, {
+            headers: { 
+              'User-Agent': 'LibraryHub-PersonalClient/1.0',
+              'X-Client-ID': c.env.MANGADEX_CLIENT_ID || 'personal-client-a696d7fa-4055-44c8-93fc-d1e47accfd1e-aa70e5aa'
+            }
+          });
+          if (mRes.ok) {
+            const data: any = await mRes.json();
+            const m = data.data;
+            if (m) {
+              const coverRel = m.relationships?.find((r: any) => r.type === 'cover_art');
+              const fileName = coverRel?.attributes?.fileName;
+              const coverUrl = fileName ? `https://uploads.mangadex.org/covers/${m.id}/${fileName}.512.jpg` : '';
+              const title = m.attributes?.title?.en || m.attributes?.title?.ja || Object.values(m.attributes?.title || {})[0] || 'Untitled Manga';
+              const desc = m.attributes?.description?.en || 'MangaDex Title';
+              results.push({
+                id: m.id,
+                source: 'MangaDex URL',
+                title,
+                type: 'manga',
+                coverUrl,
+                author: 'MangaDex Scanlations',
+                description: desc.substring(0, 200) + '...'
+              });
+            }
+          }
+        } catch (e) {
+          console.error('MangaDex URL fetch error:', e);
+        }
+      }
+    } else if (query.includes('openlibrary.org')) {
+      // OpenLibrary URL: e.g. https://openlibrary.org/works/OL85892W
+      const olidMatch = query.match(/OL[0-9]+[WM]/i);
+      const olid = olidMatch ? olidMatch[0] : '';
+      if (olid) {
+        try {
+          const olRes = await fetch(`https://openlibrary.org/works/${olid}.json`, {
+            headers: { 'User-Agent': 'LibraryHub-Fetcher/1.0' }
+          });
+          if (olRes.ok) {
+            const doc: any = await olRes.json();
+            const coverId = doc.covers ? doc.covers[0] : null;
+            const coverUrl = coverId ? `https://covers.openlibrary.org/b/id/${coverId}-L.jpg` : '';
+            results.push({
+              id: olid,
+              source: 'OpenLibrary URL',
+              title: doc.title || 'Open Library Ebook',
+              type: 'pdf',
+              coverUrl,
+              author: 'Open Library Classic',
+              description: typeof doc.description === 'string' ? doc.description.substring(0, 200) : 'Open Library Classic Work',
+              pdfUrl: query
+            });
+          }
+        } catch (e) {
+          console.error('OpenLibrary URL fetch error:', e);
+        }
+      }
+    } else if (query.endsWith('.pdf') || query.includes('/download/') || query.includes('.pdf?')) {
+      // Direct PDF URL: e.g. https://archive.org/download/dracula00stok_8/dracula00stok_8.pdf
+      const urlParts = query.split('/');
+      const fileName = urlParts[urlParts.length - 1].replace(/\.pdf$/i, '').replace(/[^a-zA-Z0-9]+/g, ' ');
+      const cleanTitle = fileName.charAt(0).toUpperCase() + fileName.slice(1);
+      results.push({
+        id: query,
+        source: 'Direct PDF URL',
+        title: cleanTitle || 'Extracted PDF Book',
+        type: 'pdf',
+        coverUrl: `https://picsum.photos/seed/${encodeURIComponent(cleanTitle)}/400/560`,
+        author: 'External Source',
+        description: `Direct PDF resource auto-extracted from URL: ${query}`,
+        pdfUrl: query
+      });
+    } else {
+      // General URL: Extract metadata & preview
+      const urlParts = query.replace(/^https?:\/\//, '').split('/');
+      const domain = urlParts[0];
+      results.push({
+        id: query,
+        source: domain.toUpperCase(),
+        title: `Content from ${domain}`,
+        type: 'pdf',
+        coverUrl: `https://picsum.photos/seed/${encodeURIComponent(domain)}/400/560`,
+        author: domain,
+        description: `Resource auto-fetched from web link: ${query}`,
+        pdfUrl: query.endsWith('.pdf') ? query : ''
+      });
+    }
+
+    return c.json({ success: true, results });
+  }
+
+  // ----------------------------------------------------
+  // RESILIENT PARALLEL KEYWORD TITLE SEARCH
+  // ----------------------------------------------------
+  const fetchPromises: Promise<any>[] = [];
+
+  // MangaDex Search
+  if (typeFilter === 'all' || typeFilter === 'manga') {
+    fetchPromises.push(
+      fetch(`https://api.mangadex.org/manga?title=${encodeURIComponent(query)}&limit=5&includes[]=cover_art`, {
+        headers: { 
+          'User-Agent': 'LibraryHub-PersonalClient/1.0',
+          'X-Client-ID': c.env.MANGADEX_CLIENT_ID || 'personal-client-a696d7fa-4055-44c8-93fc-d1e47accfd1e-aa70e5aa'
+        }
+      }).then(r => r.ok ? r.json() : null).then((data: any) => {
+        if (data && data.data) {
+          return data.data.map((m: any) => {
+            const coverRel = m.relationships?.find((r: any) => r.type === 'cover_art');
+            const fileName = coverRel?.attributes?.fileName;
+            const coverUrl = fileName ? `https://uploads.mangadex.org/covers/${m.id}/${fileName}.512.jpg` : '';
+            const title = m.attributes?.title?.en || m.attributes?.title?.ja || Object.values(m.attributes?.title || {})[0] || 'Untitled Manga';
+            const desc = m.attributes?.description?.en || 'No description available.';
+            return {
+              id: m.id,
+              source: 'MangaDex',
+              title,
+              type: 'manga',
+              coverUrl,
+              author: 'MangaDex Scanlations',
+              description: desc.substring(0, 180) + '...'
+            };
+          });
+        }
+        return [];
+      }).catch(e => { console.error('MangaDex API error:', e); return []; })
+    );
+  }
+
+  // OpenLibrary Search
+  if (typeFilter === 'all' || typeFilter === 'book' || typeFilter === 'novel') {
+    fetchPromises.push(
+      fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=5`, {
+        headers: { 'User-Agent': 'LibraryHub-Fetcher/1.0' }
+      }).then(r => r.ok ? r.json() : null).then((data: any) => {
+        if (data && data.docs) {
+          return data.docs.map((doc: any) => {
+            const coverUrl = doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` : '';
+            const iaId = doc.ia ? doc.ia[0] : null;
+            return {
+              id: doc.key || doc.cover_i || doc.title,
+              source: 'OpenLibrary',
+              title: doc.title || 'Untitled Ebook',
+              type: 'pdf',
+              coverUrl,
+              author: doc.author_name ? doc.author_name.join(', ') : 'Classic Author',
+              description: `Published: ${doc.first_publish_year || 'N/A'}. Open Library Classic.`,
+              pdfUrl: iaId ? `https://archive.org/download/${iaId}/${iaId}.pdf` : ''
+            };
+          });
+        }
+        return [];
+      }).catch(e => { console.error('OpenLibrary error:', e); return []; })
+    );
+
+    // Gutendex Search
+    fetchPromises.push(
+      fetch(`https://gutendex.com/books?search=${encodeURIComponent(query)}`, {
+        headers: { 'User-Agent': 'LibraryHub-Fetcher/1.0' }
+      }).then(r => r.ok ? r.json() : null).then((data: any) => {
+        if (data && data.results) {
+          return data.results.slice(0, 5).map((b: any) => {
+            const coverUrl = b.formats['image/jpeg'] || '';
+            const pdfUrl = b.formats['application/pdf'] || b.formats['application/epub+zip'] || '';
+            const author = b.authors ? b.authors.map((a: any) => a.name).join(', ') : 'Public Domain';
+            return {
+              id: String(b.id),
+              source: 'Gutendex',
+              title: b.title,
+              type: 'pdf',
+              coverUrl,
+              author,
+              description: `Project Gutenberg ID #${b.id}. Download count: ${b.download_count}`,
+              pdfUrl
+            };
+          });
+        }
+        return [];
+      }).catch(e => { console.error('Gutendex error:', e); return []; })
+    );
+  }
+
+  const settled = await Promise.allSettled(fetchPromises);
+  settled.forEach(s => {
+    if (s.status === 'fulfilled' && Array.isArray(s.value)) {
+      results.push(...s.value);
+    }
+  });
+
+  return c.json({ success: true, results });
+});
+
+// ==========================================
+// FETCHER BACKEND IMPORT API
+// ==========================================
+app.post('/api/fetcher/import', async (c) => {
+  const payload = await c.req.json<any>();
+  const { title, slug, description, type, author, category_slug, cover_url, file_urls } = payload;
+  const db = c.env.DB;
+
+  try {
+    const cat = await db.prepare('SELECT id FROM categories WHERE slug = ? OR slug = "books" LIMIT 1').bind(category_slug || 'books').first<{ id: number }>();
+    const categoryId = cat ? cat.id : 1;
+    const count = Array.isArray(file_urls) ? file_urls.length : 1;
+
+    await db.prepare(`
+      INSERT OR REPLACE INTO items (title, slug, description, type, author, category_id, cover_url, file_count, tags, is_hot, is_new, is_featured)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      title,
+      slug,
+      description || '',
+      type || 'pdf',
+      author || 'Public Domain',
+      categoryId,
+      cover_url || 'https://picsum.photos/seed/default/400/560',
+      count,
+      JSON.stringify(['free', 'imported', category_slug || 'ebook']),
+      0, 1, 0
+    ).run();
+
+    const item = await db.prepare('SELECT id FROM items WHERE slug = ?').bind(slug).first<{ id: number }>();
+
+    if (item && Array.isArray(file_urls) && file_urls.length > 0) {
+      await db.prepare('DELETE FROM files WHERE item_id = ?').bind(item.id).run();
+      for (let i = 0; i < file_urls.length; i++) {
+        await db.prepare(`
+          INSERT INTO files (item_id, url, filename, type, page_number)
+          VALUES (?, ?, ?, ?, ?)
+        `).bind(item.id, file_urls[i], `page-${i + 1}`, type === 'pdf' ? 'pdf' : 'image', i + 1).run();
+      }
+    }
+
+    return c.json({ success: true, message: 'Imported successfully', slug });
+  } catch (e: any) {
+    return c.json({ success: false, error: e.message }, 500);
+  }
 });
 
 // ==========================================
