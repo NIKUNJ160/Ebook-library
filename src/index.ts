@@ -2349,7 +2349,9 @@ app.get('/admin/items/delete/:slug', async (c) => {
 // ==========================================
 // CONTENT FETCHER & PDF PREVIEWER DASHBOARD
 // ==========================================
-app.get('/fetcher', async (c) => c.redirect('/admin/fetcher'));
+app.get('/fetcher', async (c) => {
+  return c.redirect('/admin/fetcher');
+});
 
 app.get('/admin/fetcher', async (c) => {
   const expectedKey = requireAdminKey(c);
@@ -2473,14 +2475,14 @@ app.get('/admin/fetcher', async (c) => {
               <label style="display:block; color:#94a3b8; font-size:12px; margin-bottom:4px;">AUTHOR / SOURCE</label>
               <input type="text" id="confirmAuthor" style="width:100%; background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 12px; border-radius:6px; font-size:14px;" />
             </div>
-            <div id="confirmLinkContainer" style="font-size:13px; color:#38bdf8;"></div>
+            <div id="confirmLinkContainer" style="font-size:13px; color:#38bdf8; margin-top:8px;"></div>
           </div>
         </div>
 
-        <div style="display:flex; gap:12px; justify-end:flex-end;">
-          <button onclick="closeConfirmModal()" style="background:#475569; color:white; border:none; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:600;">Cancel</button>
-          <button onclick="confirmAndAddToGrid()" style="background:#0284c7; color:white; border:none; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:600;"><i class="fa fa-plus"></i> Add to Grid</button>
-          <button onclick="confirmAndImportDirectly()" style="background:#059669; color:white; border:none; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:600;"><i class="fa fa-database"></i> Import to D1 DB</button>
+        <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+          <button onclick="closeConfirmModal()" style="background:#475569; color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:600;">Cancel</button>
+          <button onclick="confirmAndAddToGrid()" style="background:#0284c7; color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:600;"><i class="fa fa-plus"></i> Add to Grid</button>
+          <button onclick="confirmAndImportDirectly()" style="background:#059669; color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:600;"><i class="fa fa-database"></i> Import to D1 DB</button>
         </div>
       </div>
     </div>
@@ -2565,16 +2567,14 @@ app.get('/admin/fetcher', async (c) => {
             return;
           }
 
-          if (isUrl && data.results.length === 1) {
-            pendingUrlItem = data.results[0];
-            showUrlConfirmationModal(data.results[0]);
-            statusEl.innerHTML = 'Pasted URL detected! Please confirm details in the popup modal.';
-            return;
-          }
-
           currentResults = data.results;
           renderResultsGrid(data.results);
           statusEl.innerHTML = 'Found ' + data.results.length + ' result(s) from free sources / URL:';
+
+          if (isUrl) {
+            pendingUrlItem = data.results[0];
+            showUrlConfirmationModal(data.results[0]);
+          }
         } catch (e) {
           statusEl.innerHTML = '<span style="color:#ef4444;">Error fetching data: ' + e.message + '</span>';
         }
@@ -2584,9 +2584,8 @@ app.get('/admin/fetcher', async (c) => {
         const gridEl = document.getElementById('resultsGrid');
         gridEl.innerHTML = results.map(function(item, idx) {
           var cover = item.coverUrl || 'https://picsum.photos/seed/no-cover/400/560';
-          var downloadBtn = item.pdfUrl 
-            ? '<a href="' + item.pdfUrl + '" download target="_blank" class="btn-card" style="background:#0284c7; text-decoration:none; display:inline-flex; align-items:center; gap:4px; padding:6px 12px; border-radius:6px; font-size:12px; color:white;"><i class="fa fa-download"></i> Download PDF/CBZ</a>'
-            : '<button class="btn-card" onclick="showToast(\'Cover image archive ready\')" style="background:#475569;"><i class="fa fa-download"></i> Download CBZ</button>';
+          var targetDownloadUrl = item.pdfUrl || item.coverUrl || item.id;
+          var downloadBtn = '<a href="' + targetDownloadUrl + '" download target="_blank" class="btn-card" style="background:#0284c7; text-decoration:none; display:inline-flex; align-items:center; gap:4px; padding:6px 12px; border-radius:6px; font-size:12px; color:white;"><i class="fa fa-download"></i> Download ' + (item.pdfUrl ? 'PDF' : 'Resource') + '</a>';
 
           return '<div class="fetcher-card">' +
             '<div class="card-cover">' +
@@ -2612,7 +2611,8 @@ app.get('/admin/fetcher', async (c) => {
         document.getElementById('confirmTitle').value = item.title;
         document.getElementById('confirmAuthor').value = item.author;
         document.getElementById('confirmCover').src = item.coverUrl || 'https://picsum.photos/seed/no-cover/400/560';
-        document.getElementById('confirmLinkContainer').innerHTML = item.pdfUrl ? '<i class="fa fa-file-pdf"></i> Direct PDF Link Detected' : '<i class="fa fa-globe"></i> Source: ' + item.source.toUpperCase();
+        var fileUrl = item.pdfUrl || item.coverUrl || item.id;
+        document.getElementById('confirmLinkContainer').innerHTML = '<a href="' + fileUrl + '" target="_blank" download style="color:#38bdf8; text-decoration:underline;"><i class="fa fa-download"></i> Direct File Link: ' + fileUrl.substring(0, 45) + '...</a>';
         document.getElementById('confirmModal').classList.add('active');
       }
 
@@ -2624,7 +2624,6 @@ app.get('/admin/fetcher', async (c) => {
         if (!pendingUrlItem) return;
         pendingUrlItem.title = document.getElementById('confirmTitle').value;
         pendingUrlItem.author = document.getElementById('confirmAuthor').value;
-        currentResults.unshift(pendingUrlItem);
         renderResultsGrid(currentResults);
         closeConfirmModal();
         showToast('Added "' + pendingUrlItem.title + '" to your view grid!');
@@ -2634,7 +2633,6 @@ app.get('/admin/fetcher', async (c) => {
         if (!pendingUrlItem) return;
         pendingUrlItem.title = document.getElementById('confirmTitle').value;
         pendingUrlItem.author = document.getElementById('confirmAuthor').value;
-        currentResults.unshift(pendingUrlItem);
         renderResultsGrid(currentResults);
         closeConfirmModal();
         await importItem(0);
