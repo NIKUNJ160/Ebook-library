@@ -248,6 +248,7 @@ function handleSources() {
   console.log(`\n4. ${COLORS.fgCyan}Popular Open-Source Downloaders:${COLORS.reset}`);
   console.log(`   - ${COLORS.fgYellow}oae/kaizoku${COLORS.reset} (Self-hosted manga downloader)`);
   console.log(`   - ${COLORS.fgYellow}metafates/mangal${COLORS.reset} (CLI downloader + AniList + CBZ/PDF export)`);
+  console.log(`   - ${COLORS.fgYellow}kanasimi/work_crawler${COLORS.reset} (Novel/Comic crawler for 40+ platforms)`);
   console.log(`   - ${COLORS.fgYellow}hankscafe/omnibus${COLORS.reset} (Comic/Manga self-hosted manager)`);
   console.log(`   - ${COLORS.fgYellow}Yui007/weebcentral_downloader${COLORS.reset} (WeebCentral GUI/CLI downloader)`);
   console.log(`   - ${COLORS.fgYellow}zzyil/AIO-Webtoon-Downloader${COLORS.reset} (All-in-One Manhwa & Webtoon downloader)`);
@@ -261,6 +262,7 @@ function printHelp() {
   console.log(`${COLORS.bright}Commands:${COLORS.reset}`);
   console.log(`  ${COLORS.fgGreen}search <query> [--type=all|manga|book|novel]${COLORS.reset}   Search free sources (MangaDex, Open Library, Gutenberg)`);
   console.log(`  ${COLORS.fgGreen}mangal <query> [--format=pdf|cbz]${COLORS.reset}             Download manga/manhwa via metafates/mangal CLI`);
+  console.log(`  ${COLORS.fgGreen}crawler <site/work_id>${COLORS.reset}                        Batch crawl novels/webtoons via kanasimi/work_crawler`);
   console.log(`  ${COLORS.fgGreen}details <source> <id>${COLORS.reset}                         Fetch chapters, page images, cover art, or PDF links`);
   console.log(`  ${COLORS.fgGreen}import <source> <id>${COLORS.reset}                          Import item directly into your D1 Library Database`);
   console.log(`  ${COLORS.fgGreen}sources${COLORS.reset}                                       List supported free content APIs & cover servers`);
@@ -268,6 +270,7 @@ function printHelp() {
   console.log(`${COLORS.bright}Examples:${COLORS.reset}`);
   console.log(`  node fetcher-cli.js search "Solo Leveling" --type=manga`);
   console.log(`  node fetcher-cli.js mangal "Solo Leveling" --format=pdf`);
+  console.log(`  node fetcher-cli.js crawler "tencent/12345"`);
   console.log(`  node fetcher-cli.js import gutendex 84\n`);
 }
 
@@ -306,6 +309,20 @@ function handleMangal(query, format = 'pdf') {
   }
 }
 
+function handleCrawler(target) {
+  printBanner();
+  console.log(`${COLORS.fgCyan}${COLORS.bright}🚀 Work Crawler Integration (kanasimi/work_crawler)${COLORS.reset}\n`);
+  console.log(`Target: ${COLORS.fgYellow}"${target}"${COLORS.reset}\n`);
+  
+  console.log(`${COLORS.bright}Work Crawler Features:${COLORS.reset}`);
+  console.log(`  • Supports 40+ novel & webtoon platforms (Naver, KakaoPage, Tencent, Bilibili)`);
+  console.log(`  • Output Formats: EPUB, PDF, CBZ, and Images\n`);
+  console.log(`${COLORS.bright}Quick Installation & Command:${COLORS.reset}`);
+  console.log(`  1. Clone Repo: ${COLORS.fgBlue}git clone https://github.com/kanasimi/work_crawler.git${COLORS.reset}`);
+  console.log(`  2. Install:    ${COLORS.dim}cd work_crawler && npm install${COLORS.reset}`);
+  console.log(`  3. Run Crawl:  ${COLORS.fgGreen}node work_crawler.js "${target}"${COLORS.reset}\n`);
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const command = args[0] || 'help';
@@ -314,6 +331,13 @@ async function main() {
     printHelp();
   } else if (command === 'sources') {
     handleSources();
+  } else if (command === 'crawler') {
+    const target = args[1];
+    if (!target) {
+      console.log(`${COLORS.fgRed}Error: Target URL/ID required. Example: node fetcher-cli.js crawler "tencent/12345"${COLORS.reset}`);
+      return;
+    }
+    handleCrawler(target);
   } else if (command === 'mangal') {
     const query = args[1];
     if (!query) {

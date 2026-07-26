@@ -32,6 +32,7 @@ This guide details legal, open-access, and public domain repositories and APIs t
 | **[hankscafe/omnibus](https://github.com/hankscafe/omnibus)** | Comic & manga manager | Automated downloading and library organization. |
 | **[Yui007/weebcentral_downloader](https://github.com/Yui007/weebcentral_downloader)** | WeebCentral downloader | GUI & CLI support for fetching chapters. |
 | **[zzyil/AIO-Webtoon-Downloader](https://github.com/zzyil/AIO-Webtoon-Downloader)** | All-in-One Webtoon & Manhwa downloader | Multi-site scrapers, supports PDF & CBZ exports. |
+| **[kanasimi/work_crawler](https://github.com/kanasimi/work_crawler)** | Batch novel & comic crawler | Supports 40+ platforms (Kakao, Naver, Tencent), exports EPUB, PDF, CBZ. |
 
 ---
 
